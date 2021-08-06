@@ -133,22 +133,19 @@ class MecabController(BasicMecabController):
         super().__init__(self._mecab_cmd)
         self._config = config if config else dict()
 
-    def reading(self, _expr):
-        _expr = self.run(_expr)
+    def reading(self, expr: str) -> str:
+        expr = self.run(expr)
         out = []
 
-        for node in _expr.split(" "):
-            if not node:
-                break
-            m = re.match(r"(.+)\[(.*)]", node)
-            if not m:
+        for node in expr.split():
+            try:
+                (kanji, reading) = re.match(r'(.+)\[(.*)]', node).groups()
+            except AttributeError:
                 sys.stderr.write(
                     "Unexpected output from mecab.\n"
-                    f"Perhaps your Windows username contains non-Latin text?: {repr(_expr)}\n"
+                    "Perhaps your Windows username contains non-Latin text?: %s\n" % repr(expr)
                 )
                 return ""
-
-            (kanji, reading) = m.groups()
 
             # couldn't generate or no kanji
             if not reading or kanji == reading or kanji == to_hiragana(reading):
