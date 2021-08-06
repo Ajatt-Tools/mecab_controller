@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# Parts of this file were based on Japanese Support:
+# https://github.com/ankitects/anki-addons/blob/main/code/japanese/reading.py
+#
 # Any modifications to this file must keep this entire header intact.
 
 import os
