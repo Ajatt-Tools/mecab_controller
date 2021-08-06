@@ -16,3 +16,5 @@ expr = "千葉"
 print(mecab.reading(expr))
 expr = "昨日すき焼きを食べました"
 print(mecab.reading(expr))
+expr = "二人の美人"
+print(mecab.reading(expr))
