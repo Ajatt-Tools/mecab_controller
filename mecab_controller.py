@@ -72,8 +72,10 @@ def find_executable(name: str) -> str:
         cmd = os.path.join(SUPPORT_DIR, name)
         if isWin:
             cmd += '.exe'
-        elif not isMac:
-            cmd += ".lin"
+        elif isMac:
+            cmd += '.mac'
+        else:
+            cmd += '.lin'
         if not isWin:
             os.chmod(cmd, 0o755)
         return cmd
