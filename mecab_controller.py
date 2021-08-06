@@ -25,7 +25,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import List, Dict, Any
+from typing import List, Optional, Container
 
 from .compound_furigana import break_compound_furigana
 from .kana_conv import to_hiragana
@@ -34,7 +34,6 @@ isMac = sys.platform.startswith("darwin")
 isWin = sys.platform.startswith("win32")
 
 SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
-NUMBERS = "一二三四五六七八九十０１２３４５６７８９"
 
 if not os.path.isfile(mecabrc := os.path.join(SUPPORT_DIR, "mecabrc")):
     with open(mecabrc, 'w') as f:
@@ -117,9 +116,6 @@ class BasicMecabController(object):
 
         return outs.rstrip(b'\r\n').decode('utf-8', "replace")
 
-    def reading(self, expr: str) -> str:
-        return self.run(expr)
-
 
 class MecabController(BasicMecabController):
     _mecab_cmd = [
@@ -132,11 +128,10 @@ class MecabController(BasicMecabController):
         '-u', os.path.join(SUPPORT_DIR, "user_dic.dic")
     ]
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self):
         super().__init__(self._mecab_cmd)
-        self._config = config if config else dict()
 
-    def reading(self, expr: str) -> str:
+    def reading(self, expr: str, skip_words: Optional[Container[str]]) -> str:
         expr = self.run(expr)
         out = []
 
@@ -163,13 +158,8 @@ class MecabController(BasicMecabController):
                 out.append(kanji)
                 continue
 
-            # don't add readings of numbers
-            if self._config.get('skipNumbers', True) is True and kanji in NUMBERS:
-                out.append(kanji)
-                continue
-
-            # other skip expressions
-            if kanji in self._config.get('skip_expressions', []):
+            # skip expressions
+            if skip_words and kanji in skip_words:
                 out.append(kanji)
                 continue
 
