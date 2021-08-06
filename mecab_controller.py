@@ -135,7 +135,7 @@ class MecabController(BasicMecabController):
         expr = self.run(expr)
         out = []
 
-        for node in expr.split():
+        for node in filter(bool, expr.split(' ')):
             try:
                 (kanji, reading) = re.match(r'(.+)\[(.*)]', node).groups()
             except AttributeError:
