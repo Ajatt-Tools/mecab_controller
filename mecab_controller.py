@@ -140,8 +140,7 @@ class BasicMecabController(object):
         print('mecab cmd:', self._mecab_cmd)
 
     def run(self, expr: str) -> str:
-        expr = escape_text(expr).encode('utf-8', "ignore") + b'\n'
-
+        expr = expr.encode('utf-8', 'ignore') + b'\n'
         try:
             proc = subprocess.Popen(
                 self._mecab_cmd,
@@ -160,7 +159,7 @@ class BasicMecabController(object):
             proc.kill()
             outs, errs = proc.communicate()
 
-        return outs.rstrip(b'\r\n').decode('utf-8', "replace")
+        return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
 
 
 class MecabController(BasicMecabController):
@@ -174,7 +173,7 @@ class MecabController(BasicMecabController):
         super().__init__(mecab_args=self._add_mecab_args)
 
     def reading(self, expr: str, skip_words: Optional[Container[str]]) -> str:
-        expr = self.run(expr)
+        expr = self.run(escape_text(expr))
         out = []
 
         for node in filter(bool, expr.split(' ')):
