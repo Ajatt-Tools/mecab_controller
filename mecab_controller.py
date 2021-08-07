@@ -123,8 +123,18 @@ def format_output(kanji: str, reading: str) -> str:
 ##########################################################################
 
 class BasicMecabController(object):
-    def __init__(self, mecab_cmd: List[str]):
-        self._mecab_cmd = normalize_for_platform(mecab_cmd)
+    __mecab_cmd = [
+        find_executable('mecab'),
+        '-d', SUPPORT_DIR,
+        '-r', os.path.join(SUPPORT_DIR, "mecabrc"),
+        '-u', os.path.join(SUPPORT_DIR, "user_dic.dic"),
+    ]
+
+    def __init__(self, mecab_cmd: List[str] = None, mecab_args: List[str] = None):
+        mecab_cmd = mecab_cmd if mecab_cmd else self.__mecab_cmd
+        mecab_args = mecab_args if mecab_args else []
+        self._mecab_cmd = normalize_for_platform(mecab_cmd + mecab_args)
+
         os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
         os.environ['LD_LIBRARY_PATH'] = SUPPORT_DIR
         print('mecab cmd:', self._mecab_cmd)
@@ -154,18 +164,14 @@ class BasicMecabController(object):
 
 
 class MecabController(BasicMecabController):
-    _mecab_cmd = [
-        find_executable('mecab'),
+    _add_mecab_args = [
         '--node-format=%m[%f[7]] ',
         '--unk-format=%m[] ',
         '--eos-format=\n',
-        '-d', SUPPORT_DIR,
-        '-r', os.path.join(SUPPORT_DIR, "mecabrc"),
-        '-u', os.path.join(SUPPORT_DIR, "user_dic.dic")
     ]
 
     def __init__(self):
-        super().__init__(self._mecab_cmd)
+        super().__init__(mecab_args=self._add_mecab_args)
 
     def reading(self, expr: str, skip_words: Optional[Container[str]]) -> str:
         expr = self.run(expr)
