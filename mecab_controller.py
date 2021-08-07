@@ -47,19 +47,6 @@ else:
     si = None
 
 
-def strip_some_html(s: str) -> str:
-    # strip html, but keep newlines and <b></b> tags to let Targeted Sentence Cards formatting through
-    return re.sub(r'<(?!br|b|/b)[^<>]*?>', '', s)
-
-
-def escape_text(text: str) -> str:
-    # strip characters that trip up mecab
-    text = text.replace("\n", " ")
-    text = text.replace(u'\uff5e', "～")
-    text = strip_some_html(text)
-    return text
-
-
 def normalize_for_platform(popen: List[str]) -> List[str]:
     if isWin:
         popen = [os.path.normpath(x) for x in popen]
@@ -81,6 +68,55 @@ def find_executable(name: str) -> str:
         if not isWin:
             os.chmod(cmd, 0o755)
         return cmd
+
+
+# Text
+##########################################################################
+
+def strip_some_html(s: str) -> str:
+    # strip html, but keep newlines and <b></b> tags to let Targeted Sentence Cards formatting through
+    return re.sub(r'<(?!br|b|/b)[^<>]*?>', '', s)
+
+
+def escape_text(text: str) -> str:
+    # strip characters that trip up mecab
+    text = text.replace("\n", " ")
+    text = text.replace(u'\uff5e', "～")
+    text = strip_some_html(text)
+    return text
+
+
+def format_output(kanji: str, reading: str) -> str:
+    """Convert (kanji, reading) input to output that Anki understands: kanji[reading]"""
+    # strip matching characters and beginning and end of reading and kanji
+    # reading should always be at least as long as the kanji
+    place_l = 0
+    place_r = 0
+    for i in range(1, len(kanji)):
+        if kanji[-i] != reading[-i]:
+            break
+        place_r = i
+    for i in range(0, len(kanji) - 1):
+        if kanji[i] != reading[i]:
+            break
+        place_l = i + 1
+    if place_l == 0:
+        if place_r == 0:
+            out_expr = " %s[%s]" % (kanji, reading)
+        else:
+            out_expr = " %s[%s]%s" % (kanji[:-place_r], reading[:-place_r], reading[-place_r:])
+
+        out_expr = break_compound_furigana(out_expr)
+    else:
+        if place_r == 0:
+            out_expr = "%s %s[%s]" % (reading[:place_l], kanji[place_l:], reading[place_l:])
+        else:
+            out_expr = "%s %s[%s]%s" % (
+                reading[:place_l], kanji[place_l:-place_r],
+                reading[place_l:-place_r], reading[-place_r:],
+            )
+
+    return out_expr
 
 
 # Mecab
@@ -163,34 +199,6 @@ class MecabController(BasicMecabController):
                 out.append(kanji)
                 continue
 
-            # strip matching characters and beginning and end of reading and kanji
-            # reading should always be at least as long as the kanji
-            place_l = 0
-            place_r = 0
-            for i in range(1, len(kanji)):
-                if kanji[-i] != reading[-i]:
-                    break
-                place_r = i
-            for i in range(0, len(kanji) - 1):
-                if kanji[i] != reading[i]:
-                    break
-                place_l = i + 1
-            if place_l == 0:
-                if place_r == 0:
-                    out_expr = " %s[%s]" % (kanji, reading)
-                else:
-                    out_expr = " %s[%s]%s" % (kanji[:-place_r], reading[:-place_r], reading[-place_r:])
-
-                out_expr = break_compound_furigana(out_expr)
-            else:
-                if place_r == 0:
-                    out_expr = "%s %s[%s]" % (reading[:place_l], kanji[place_l:], reading[place_l:])
-                else:
-                    out_expr = "%s %s[%s]%s" % (
-                        reading[:place_l], kanji[place_l:-place_r],
-                        reading[place_l:-place_r], reading[-place_r:],
-                    )
-
-            out.append(out_expr)
+            out.append(format_output(kanji, reading))
 
         return ''.join(out).strip().replace("< br>", "<br>")
