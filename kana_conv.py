@@ -69,7 +69,7 @@ def to_hiragana(katakana: str) -> str:
     return ''.join(katakana_to_hiragana.get(k, k) for k in katakana)
 
 
-def to_katakana(hiragana: str):
+def to_katakana(hiragana: str) -> str:
     return ''.join(hiragana_to_katakana.get(h, h) for h in hiragana)
 
 
