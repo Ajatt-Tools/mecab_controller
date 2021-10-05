@@ -206,4 +206,4 @@ class MecabController(BasicMecabController):
 
             out.append(format_output(kanji, reading))
 
-        return ''.join(out).strip().replace("< br>", "<br>")
+        return ''.join(out).replace("< br>", "<br>").strip()
