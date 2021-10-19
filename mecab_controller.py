@@ -169,10 +169,11 @@ class MecabController(BasicMecabController):
         '--eos-format=\n',
     ]
 
-    def __init__(self):
+    def __init__(self, skip_words: Optional[Container[str]]):
         super().__init__(mecab_args=self._add_mecab_args)
+        self._skip_words = skip_words if skip_words else []
 
-    def reading(self, expr: str, skip_words: Optional[Container[str]]) -> str:
+    def reading(self, expr: str) -> str:
         expr = self.run(escape_text(expr))
         out = []
 
@@ -200,7 +201,7 @@ class MecabController(BasicMecabController):
                 continue
 
             # skip expressions
-            if skip_words and kanji in skip_words:
+            if kanji in self._skip_words:
                 out.append(kanji)
                 continue
 
