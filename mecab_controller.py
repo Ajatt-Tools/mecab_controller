@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Japanese support add-on for Anki 2.1
 # Copyright (C) 2021  Ren Tatsumoto. <tatsu at autistici.org>
 #
@@ -81,7 +79,7 @@ def strip_some_html(s: str) -> str:
 def escape_text(text: str) -> str:
     # strip characters that trip up mecab
     text = text.replace("\n", " ")
-    text = text.replace(u'\uff5e', "～")
+    text = text.replace('\uff5e', "～")
     text = strip_some_html(text)
     return text
 
@@ -102,16 +100,16 @@ def format_output(kanji: str, reading: str) -> str:
         place_l = i + 1
     if place_l == 0:
         if place_r == 0:
-            out_expr = " %s[%s]" % (kanji, reading)
+            out_expr = f" {kanji}[{reading}]"
         else:
-            out_expr = " %s[%s]%s" % (kanji[:-place_r], reading[:-place_r], reading[-place_r:])
+            out_expr = f" {kanji[:-place_r]}[{reading[:-place_r]}]{reading[-place_r:]}"
 
         out_expr = break_compound_furigana(out_expr)
     else:
         if place_r == 0:
-            out_expr = "%s %s[%s]" % (reading[:place_l], kanji[place_l:], reading[place_l:])
+            out_expr = f"{reading[:place_l]} {kanji[place_l:]}[{reading[place_l:]}]"
         else:
-            out_expr = "%s %s[%s]%s" % (
+            out_expr = "{} {}[{}]{}".format(
                 reading[:place_l], kanji[place_l:-place_r],
                 reading[place_l:-place_r], reading[-place_r:],
             )
@@ -122,7 +120,7 @@ def format_output(kanji: str, reading: str) -> str:
 # Mecab
 ##########################################################################
 
-class BasicMecabController(object):
+class BasicMecabController:
     __mecab_cmd = [
         find_executable('mecab'),
         '-d', SUPPORT_DIR,
