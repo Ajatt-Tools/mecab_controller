@@ -16,34 +16,45 @@
 #
 # Any modifications to this file must keep this entire header intact.
 
+from typing import NamedTuple, Optional
+
+
+class Pos(NamedTuple):
+    out_start: int
+    out_end: int
+    in_start: int
+    in_end: int
+
+
+def find_common_kana(expr: str, out_pos_start: int, in_pos_start: int) -> Pos:
+    out_pos_end, in_pos_end = out_pos_start, in_pos_start
+
+    while expr[out_pos_end] == expr[in_pos_end]:
+        out_pos_end += 1
+        in_pos_end += 1
+
+    return Pos(out_pos_start, out_pos_end, in_pos_start, in_pos_end)
+
+
+def traverse(expr: str, furigana_start: int) -> Optional[Pos]:
+    # starting from the second character and traversing to [
+    for out_i in range(1, furigana_start):
+        # starting inside the parentheses
+        # +2 because at least 1 kana character must always belong to the first clause
+        # as in `言い方[いいかた]`, the first `い` belongs to `言`.
+        # -1 because the last character closes furigana - `]`
+        for in_i in range(furigana_start + 2, len(expr) - 1):
+            if expr[out_i] == expr[in_i]:
+                return find_common_kana(expr, out_i, in_i)
+    return None
+
+
 def break_compound_furigana(expr: str) -> str:
     furigana_start = expr.find('[')
 
-    def find_common_kana(out_pos_start: int, in_pos_start: int):
-        out_pos_end, in_pos_end = out_pos_start, in_pos_start
-
-        while expr[out_pos_end] == expr[in_pos_end]:
-            out_pos_end += 1
-            in_pos_end += 1
-
-        return (out_pos_start, out_pos_end), (in_pos_start, in_pos_end)
-
-    def traverse():
-        # starting from the second character and traversing to [
-        for out_i in range(1, furigana_start):
-            # starting inside the parentheses
-            # +2 because at least 1 kana character must always belong to the first clause
-            # as in `言い方[いいかた]`, the first `い` belongs to `言`.
-            # -1 because the last character closes furigana - `]`
-            for in_i in range(furigana_start + 2, len(expr) - 1):
-                if expr[out_i] == expr[in_i]:
-                    return find_common_kana(out_i, in_i)
-        return None
-
-    found = traverse()
-    if found:
-        result_expr = f"{expr[:found[0][0]]}{expr[furigana_start:found[1][0]]}]{expr[found[0][0]:found[0][1]]} "
-        result_expr += break_compound_furigana(f"{expr[found[0][1]:furigana_start]}[{expr[found[1][1]:]}")
+    if p := traverse(expr, furigana_start):
+        result_expr = f"{expr[:p.out_start]}{expr[furigana_start:p.in_start]}]{expr[p.out_start:p.out_end]} "
+        result_expr += break_compound_furigana(f"{expr[p.out_end:furigana_start]}[{expr[p.in_end:]}")
     else:
         result_expr = expr
 
@@ -54,3 +65,4 @@ if __name__ == "__main__":
     print(break_compound_furigana('取って置[とってお]き'))
     print(break_compound_furigana('言い方[いいかた]'))
     print(break_compound_furigana('丸め込[まるめこ]む'))
+    print(break_compound_furigana('繋[つなが]る'))
