@@ -35,7 +35,7 @@ SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
 
 if not os.path.isfile(mecabrc := os.path.join(SUPPORT_DIR, "mecabrc")):
     with open(mecabrc, 'w') as f:
-        # create mecabrc if doesn't exist
+        # create mecabrc if it doesn't exist
         f.write("")
 
 if isWin:
@@ -167,7 +167,7 @@ class MecabController(BasicMecabController):
         '--eos-format=\n',
     ]
 
-    def __init__(self, skip_words: Optional[Container[str]]):
+    def __init__(self, skip_words: Optional[Container[str]] = None):
         super().__init__(mecab_args=self._add_mecab_args)
         self._skip_words = skip_words if skip_words else []
 
