@@ -160,6 +160,10 @@ class BasicMecabController:
         return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
 
 
+def is_kana_word(word: str, reading: str) -> bool:
+    return to_hiragana(word) == to_hiragana(reading)
+
+
 class MecabController(BasicMecabController):
     _add_mecab_args = [
         '--node-format=%m[%f[7]] ',
@@ -186,7 +190,7 @@ class MecabController(BasicMecabController):
                 return ""
 
             # couldn't generate or no kanji
-            if not reading or kanji == reading or kanji == to_hiragana(reading):
+            if not reading or is_kana_word(kanji, reading):
                 out.append(kanji)
                 continue
 
