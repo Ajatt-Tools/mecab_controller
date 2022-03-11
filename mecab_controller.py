@@ -25,7 +25,7 @@ import subprocess
 import sys
 from typing import List, Optional, Container
 
-from .compound_furigana import break_compound_furigana
+from .format import format_output
 from .kana_conv import to_hiragana, is_kana_word
 
 isMac = sys.platform.startswith("darwin")
@@ -82,39 +82,6 @@ def escape_text(text: str) -> str:
     text = text.replace('\uff5e', "～")
     text = strip_some_html(text)
     return text
-
-
-def format_output(kanji: str, reading: str) -> str:
-    """Convert (kanji, reading) input to output that Anki understands: kanji[reading]"""
-    # strip matching characters and beginning and end of reading and kanji
-    # reading should always be at least as long as the kanji
-    place_l = 0
-    place_r = 0
-    for i in range(1, len(kanji)):
-        if kanji[-i] != reading[-i]:
-            break
-        place_r = i
-    for i in range(0, len(kanji) - 1):
-        if kanji[i] != reading[i]:
-            break
-        place_l = i + 1
-    if place_l == 0:
-        if place_r == 0:
-            out_expr = f" {kanji}[{reading}]"
-        else:
-            out_expr = f" {kanji[:-place_r]}[{reading[:-place_r]}]{reading[-place_r:]}"
-
-        out_expr = break_compound_furigana(out_expr)
-    else:
-        if place_r == 0:
-            out_expr = f"{reading[:place_l]} {kanji[place_l:]}[{reading[place_l:]}]"
-        else:
-            out_expr = "{} {}[{}]{}".format(
-                reading[:place_l], kanji[place_l:-place_r],
-                reading[place_l:-place_r], reading[-place_r:],
-            )
-
-    return out_expr
 
 
 # Mecab
