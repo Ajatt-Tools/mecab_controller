@@ -26,7 +26,7 @@ import sys
 from typing import List, Optional, Container
 
 from .compound_furigana import break_compound_furigana
-from .kana_conv import to_hiragana
+from .kana_conv import to_hiragana, is_kana_word
 
 isMac = sys.platform.startswith("darwin")
 isWin = sys.platform.startswith("win32")
@@ -158,10 +158,6 @@ class BasicMecabController:
             outs, errs = proc.communicate()
 
         return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
-
-
-def is_kana_word(word: str, reading: str) -> bool:
-    return to_hiragana(word) == to_hiragana(reading)
 
 
 class MecabController(BasicMecabController):

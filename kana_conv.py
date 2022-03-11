@@ -58,6 +58,7 @@ _katakana = [
     'ャ', 'ュ', 'ョ',
     'ッ',
 ]
+_kana = _hiragana + _katakana
 
 katakana_to_hiragana = dict(zip(_katakana, _hiragana))
 hiragana_to_katakana = {y: x for x, y in katakana_to_hiragana.items()}
@@ -71,9 +72,17 @@ def to_katakana(hiragana: str) -> str:
     return ''.join(hiragana_to_katakana.get(h, h) for h in hiragana)
 
 
+def is_kana_word(word: str, mecab_reading: str = None) -> bool:
+    if mecab_reading:
+        return to_hiragana(word) == to_hiragana(mecab_reading)
+    else:
+        return sum(map(lambda char: int(char in _kana or char == 'ー'), word)) == len(word)
+
+
 def main():
     print(to_hiragana('オープンソース形態素解析エンジンです。'))
     print(to_katakana('お前はもう死んでいる。'))
+    print(is_kana_word('ひらがなカタカナ'), is_kana_word('ニュース'), is_kana_word('故郷は'))
 
 
 if __name__ == '__main__':
