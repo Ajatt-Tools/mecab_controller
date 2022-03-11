@@ -16,7 +16,7 @@
 #
 # Any modifications to this file must keep this entire header intact.
 
-__all__ = ['to_katakana', 'to_hiragana']
+__all__ = ['to_katakana', 'to_hiragana', 'is_kana_word']
 
 _hiragana = [
     'が', 'ぎ', 'ぐ', 'げ', 'ご',
