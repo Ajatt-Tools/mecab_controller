@@ -153,7 +153,7 @@ class MecabController(BasicMecabController):
                 return ""
 
             # couldn't generate or no kanji
-            if not reading or is_kana_word(kanji, reading):
+            if not reading or is_kana_word(kanji):
                 out.append(kanji)
                 continue
 

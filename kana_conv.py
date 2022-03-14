@@ -72,11 +72,8 @@ def to_katakana(hiragana: str) -> str:
     return ''.join(hiragana_to_katakana.get(h, h) for h in hiragana)
 
 
-def is_kana_word(word: str, mecab_reading: str = None) -> bool:
-    if mecab_reading:
-        return to_hiragana(word) == to_hiragana(mecab_reading)
-    else:
-        return sum(map(lambda char: int(char in _kana or char == 'ー'), word)) == len(word)
+def is_kana_word(word: str) -> bool:
+    return sum(map(lambda char: int(char in _kana or char == 'ー'), word)) == len(word)
 
 
 def main():
