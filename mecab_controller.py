@@ -72,8 +72,9 @@ def find_executable(name: str) -> str:
 ##########################################################################
 
 def strip_some_html(s: str) -> str:
-    # strip html, but keep newlines and <b></b> tags to let Targeted Sentence Cards formatting through
-    return re.sub(r'<(?!br|b|/b)[^<>]*?>', '', s)
+    # strip html, but keep newlines, <strong></strong> and <b></b> tags to let
+    # Targeted Sentence Cards formatting through
+    return re.sub(r'<(?!br|/?b|/?strong)[^<>]*?>', '', s)
 
 
 def escape_text(text: str) -> str:
