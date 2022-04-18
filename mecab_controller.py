@@ -68,23 +68,6 @@ def find_executable(name: str) -> str:
         return cmd
 
 
-# Text
-##########################################################################
-
-def strip_some_html(s: str) -> str:
-    # strip html, but keep newlines, <strong></strong> and <b></b> tags to let
-    # Targeted Sentence Cards formatting through
-    return re.sub(r'<(?!br|/?b|/?strong)[^<>]*?>', '', s)
-
-
-def escape_text(text: str) -> str:
-    # strip characters that trip up mecab
-    text = text.replace("\n", " ")
-    text = text.replace('\uff5e', "～")
-    text = strip_some_html(text)
-    return text
-
-
 # Mecab
 ##########################################################################
 
@@ -139,8 +122,18 @@ class MecabController(BasicMecabController):
         super().__init__(mecab_args=self._add_mecab_args)
         self._skip_words = skip_words if skip_words else []
 
+    @staticmethod
+    def escape_text(text: str) -> str:
+        """Strip characters that trip up mecab."""
+        text = text.replace("\n", " ")
+        text = text.replace('\uff5e', "~")
+        text = re.sub(r'<[^<>]+>', '', text)
+        text = re.sub(r"\[sound:[^]]+]", "", text)
+        text = re.sub(r"\[\[type:[^]]+]]", "", text)
+        return text.strip()
+
     def reading(self, expr: str) -> str:
-        expr = self.run(escape_text(expr))
+        expr = self.run(self.escape_text(expr))
         out = []
 
         for node in filter(bool, expr.split(' ')):
