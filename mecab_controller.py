@@ -23,10 +23,10 @@ import os
 import re
 import subprocess
 import sys
-from typing import List, Optional, Container
+from typing import List, Optional, NamedTuple, Iterable
 
 from .format import format_output
-from .kana_conv import to_hiragana, is_kana_word
+from .kana_conv import to_hiragana, is_kana_word, to_katakana
 
 isMac = sys.platform.startswith("darwin")
 isWin = sys.platform.startswith("win32")
@@ -71,6 +71,18 @@ def find_executable(name: str) -> str:
 # Mecab
 ##########################################################################
 
+class ParsedToken(NamedTuple):
+    word: str
+    headword: str
+    katakana_reading: Optional[str]
+    part_of_speech: Optional[str]
+    inflection: Optional[str]
+
+    @property
+    def hiragana_reading(self) -> str:
+        return to_hiragana(self.katakana_reading)
+
+
 class BasicMecabController:
     __mecab_cmd = [
         find_executable('mecab'),
@@ -79,7 +91,8 @@ class BasicMecabController:
         '-u', os.path.join(SUPPORT_DIR, "user_dic.dic"),
     ]
 
-    def __init__(self, mecab_cmd: List[str] = None, mecab_args: List[str] = None):
+    def __init__(self, mecab_cmd: List[str] = None, mecab_args: List[str] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         mecab_cmd = mecab_cmd if mecab_cmd else self.__mecab_cmd
         mecab_args = mecab_args if mecab_args else []
         self._mecab_cmd = normalize_for_platform(mecab_cmd + mecab_args)
@@ -113,14 +126,15 @@ class BasicMecabController:
 
 class MecabController(BasicMecabController):
     _add_mecab_args = [
-        '--node-format=%m[%f[7]] ',
-        '--unk-format=%m[] ',
+        # Format: word,headword,katakana reading,part of speech,inflection
+        '--node-format=%m,%f[6],%f[7],%f[0],%f[5]\t',
+        '--unk-format=%m\t',
         '--eos-format=\n',
     ]
 
-    def __init__(self, skip_words: Optional[Container[str]] = None):
-        super().__init__(mecab_args=self._add_mecab_args)
-        self._skip_words = skip_words if skip_words else []
+    def __init__(self, verbose: bool = False, *args, **kwargs):
+        super().__init__(mecab_args=self._add_mecab_args, *args, **kwargs)
+        self._verbose = verbose
 
     @staticmethod
     def escape_text(text: str) -> str:
@@ -132,38 +146,37 @@ class MecabController(BasicMecabController):
         text = re.sub(r"\[\[type:[^]]+]]", "", text)
         return text.strip()
 
-    def reading(self, expr: str) -> str:
-        expr = self.run(self.escape_text(expr))
-        out = []
+    def translate(self, expr: str) -> Iterable[ParsedToken]:
+        """ Returns a parsed token for each word in expr. """
+        expr = self.escape_text(expr)
 
-        for node in filter(bool, expr.split(' ')):
-            try:
-                (kanji, reading) = re.match(r'(.+)\[(.*)]', node).groups()
-            except AttributeError:
-                sys.stderr.write(
-                    "Unexpected output from mecab.\n"
-                    "Perhaps your Windows username contains non-Latin text?: %s\n" % repr(expr)
+        for section in self.run(expr).split('\t'):
+            if section:
+                try:
+                    word, headword, katakana_reading, part_of_speech, inflection = section.split(',')
+                except ValueError:
+                    word, headword, katakana_reading = (section,) * 3
+                    part_of_speech, inflection = None, None
+
+                if is_kana_word(word) or to_katakana(word) == to_katakana(katakana_reading):
+                    katakana_reading = None
+
+                if self._verbose:
+                    print(word, katakana_reading, headword, part_of_speech, inflection, sep='\t')
+                yield ParsedToken(
+                    word=word,
+                    headword=headword,
+                    katakana_reading=katakana_reading,
+                    part_of_speech=part_of_speech,
+                    inflection=inflection
                 )
-                return ""
 
-            # couldn't generate or no kanji
-            if not reading or is_kana_word(kanji):
-                out.append(kanji)
-                continue
-
-            # convert reading to hiragana
-            reading = to_hiragana(reading)
-
-            # ended up the same
-            if reading == kanji:
-                out.append(kanji)
-                continue
-
-            # skip expressions
-            if kanji in self._skip_words:
-                out.append(kanji)
-                continue
-
-            out.append(format_output(kanji, reading))
-
-        return ''.join(out).replace("< br>", "<br>").strip()
+    def reading(self, expr: str) -> str:
+        substrings = []
+        for out in self.translate(expr):
+            substrings.append(
+                format_output(out.word, to_hiragana(out.katakana_reading))
+                if out.katakana_reading
+                else out.word
+            )
+        return ''.join(substrings).strip()
