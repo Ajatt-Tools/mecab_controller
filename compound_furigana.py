@@ -66,3 +66,4 @@ if __name__ == "__main__":
     print(break_compound_furigana('言い方[いいかた]'))
     print(break_compound_furigana('丸め込[まるめこ]む'))
     print(break_compound_furigana('繋[つなが]る'))
+    print(break_compound_furigana('お 問い合[といあ]わせ'))

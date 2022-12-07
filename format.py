@@ -28,15 +28,13 @@ def format_output(kanji: str, reading: str) -> str:
             out_expr = f" {kanji}[{reading}]"
         else:
             out_expr = f" {kanji[:-place_r]}[{reading[:-place_r]}]{kanji[-place_r:]}"
-
-        out_expr = break_compound_furigana(out_expr)
     else:
         if place_r == 0:
             out_expr = f"{kanji[:place_l]} {kanji[place_l:]}[{reading[place_l:]}]"
         else:
             out_expr = f"{kanji[:place_l]} {kanji[place_l:-place_r]}[{reading[place_l:-place_r]}]{kanji[-place_r:]}"
 
-    return out_expr
+    return break_compound_furigana(out_expr)
 
 
 if __name__ == '__main__':

@@ -18,3 +18,5 @@ expr = "昨日すき焼きを食べました"
 print(mecab.reading(expr))
 expr = "二人の美人"
 print(mecab.reading(expr))
+expr = "詳細はお気軽にお問い合わせ下さい。"
+print(mecab.reading(expr))
