@@ -1,85 +1,44 @@
-# Japanese support add-on for Anki 2.1
-# Copyright (C) 2021  Ren Tatsumoto. <tatsu at autistici.org>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# Any modifications to this file must keep this entire header intact.
+# Copyright: Ren Tatsumoto <tatsu at autistici.org>
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-__all__ = ['to_katakana', 'to_hiragana', 'is_kana_word']
+__all__ = ['to_katakana', 'to_hiragana', 'is_kana_str']
 
-_hiragana = [
-    'が', 'ぎ', 'ぐ', 'げ', 'ご',
-    'ざ', 'じ', 'ず', 'ぜ', 'ぞ',
-    'だ', 'ぢ', 'づ', 'で', 'ど',
-    'ば', 'び', 'ぶ', 'べ', 'ぼ',
-    'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ',
-    'あ', 'い', 'う', 'え', 'お',
-    'か', 'き', 'く', 'け', 'こ',
-    'さ', 'し', 'す', 'せ', 'そ',
-    'た', 'ち', 'つ', 'て', 'と',
-    'な', 'に', 'ぬ', 'ね', 'の',
-    'は', 'ひ', 'ふ', 'へ', 'ほ',
-    'ま', 'み', 'む', 'め', 'も',
-    'や', 'ゆ', 'よ',
-    'ら', 'り', 'る', 'れ', 'ろ',
-    'わ', 'を', 'ん',
-    'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ',
-    'ゃ', 'ゅ', 'ょ',
-    'っ',
-]
-_katakana = [
-    'ガ', 'ギ', 'グ', 'ゲ', 'ゴ',
-    'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ',
-    'ダ', 'ヂ', 'ヅ', 'デ', 'ド',
-    'バ', 'ビ', 'ブ', 'ベ', 'ボ',
-    'パ', 'ピ', 'プ', 'ペ', 'ポ',
-    'ア', 'イ', 'ウ', 'エ', 'オ',
-    'カ', 'キ', 'ク', 'ケ', 'コ',
-    'サ', 'シ', 'ス', 'セ', 'ソ',
-    'タ', 'チ', 'ツ', 'テ', 'ト',
-    'ナ', 'ニ', 'ヌ', 'ネ', 'ノ',
-    'ハ', 'ヒ', 'フ', 'ヘ', 'ホ',
-    'マ', 'ミ', 'ム', 'メ', 'モ',
-    'ヤ', 'ユ', 'ヨ',
-    'ラ', 'リ', 'ル', 'レ', 'ロ',
-    'ワ', 'ヲ', 'ン',
-    'ァ', 'ィ', 'ゥ', 'ェ', 'ォ',
-    'ャ', 'ュ', 'ョ',
-    'ッ',
-]
-_kana = _hiragana + _katakana
+# Define characters
+HIRAGANA = "ぁあぃいぅうぇえぉおかがか゚きぎき゚くぐく゚けげけ゚こごこ゚さざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖゝゞ"
+KATAKANA = "ァアィイゥウェエォオカガカ゚キギキ゚クグク゚ケゲケ゚コゴコ゚サザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヽヾ"
 
-katakana_to_hiragana = dict(zip(_katakana, _hiragana))
-hiragana_to_katakana = {y: x for x, y in katakana_to_hiragana.items()}
+# Translation tables
+KATAKANA_TO_HIRAGANA = str.maketrans(KATAKANA, HIRAGANA)
+HIRAGANA_TO_KATAKANA = str.maketrans(HIRAGANA, KATAKANA)
 
 
-def to_hiragana(katakana: str) -> str:
-    return ''.join(katakana_to_hiragana.get(k, k) for k in katakana)
+def to_hiragana(kana):
+    return kana.translate(KATAKANA_TO_HIRAGANA)
 
 
-def to_katakana(hiragana: str) -> str:
-    return ''.join(hiragana_to_katakana.get(h, h) for h in hiragana)
+def to_katakana(kana):
+    return kana.translate(HIRAGANA_TO_KATAKANA)
 
 
-def is_kana_word(word: str) -> bool:
-    return sum(map(lambda char: int(char in _kana or char == 'ー'), word)) == len(word)
+def is_kana_char(char: str) -> bool:
+    return (
+            char in HIRAGANA
+            or char in KATAKANA
+            or char == 'ー'
+    )
+
+
+def is_kana_str(word: str) -> bool:
+    return all(map(is_kana_char, word))
 
 
 def main():
-    print(to_hiragana('オープンソース形態素解析エンジンです。'))
-    print(to_katakana('お前はもう死んでいる。'))
-    print(is_kana_word('ひらがなカタカナ'), is_kana_word('ニュース'), is_kana_word('故郷は'))
+    assert to_hiragana('<div>オープンソース形態素解析エンジンです。Test 😀') == '<div>おーぷんそーす形態素解析えんじんです。Test 😀'
+    assert to_katakana('お前はもう死んでいる。') == 'オ前ハモウ死ンデイル。'
+    assert is_kana_str('ひらがなカタカナ') == True
+    assert is_kana_str('ニュース') == True
+    assert is_kana_str('故郷は') == False
+    print("Ok.")
 
 
 if __name__ == '__main__':

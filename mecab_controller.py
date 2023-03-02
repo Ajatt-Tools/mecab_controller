@@ -26,7 +26,7 @@ import sys
 from typing import List, Optional, NamedTuple, Iterable
 
 from .format import format_output
-from .kana_conv import to_hiragana, is_kana_word, to_katakana
+from .kana_conv import to_hiragana, is_kana_str, to_katakana
 
 isMac = sys.platform.startswith("darwin")
 isWin = sys.platform.startswith("win32")
@@ -77,10 +77,6 @@ class ParsedToken(NamedTuple):
     katakana_reading: Optional[str]
     part_of_speech: Optional[str]
     inflection: Optional[str]
-
-    @property
-    def hiragana_reading(self) -> str:
-        return to_hiragana(self.katakana_reading)
 
 
 class BasicMecabController:
@@ -158,7 +154,7 @@ class MecabController(BasicMecabController):
                     word, headword, katakana_reading = (section,) * 3
                     part_of_speech, inflection = None, None
 
-                if is_kana_word(word) or to_katakana(word) == to_katakana(katakana_reading):
+                if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
                     katakana_reading = None
 
                 if self._verbose:
