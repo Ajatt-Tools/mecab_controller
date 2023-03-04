@@ -80,7 +80,7 @@ class ParsedToken(NamedTuple):
 
 
 class BasicMecabController:
-    __mecab_cmd = [
+    _mecab_cmd = [
         find_executable('mecab'),
         '-d', SUPPORT_DIR,
         '-r', os.path.join(SUPPORT_DIR, "mecabrc"),
@@ -89,10 +89,7 @@ class BasicMecabController:
 
     def __init__(self, mecab_cmd: List[str] = None, mecab_args: List[str] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        mecab_cmd = mecab_cmd if mecab_cmd else self.__mecab_cmd
-        mecab_args = mecab_args if mecab_args else []
-        self._mecab_cmd = normalize_for_platform(mecab_cmd + mecab_args)
-
+        self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
         os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
         os.environ['LD_LIBRARY_PATH'] = SUPPORT_DIR
         print('mecab cmd:', self._mecab_cmd)
