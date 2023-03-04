@@ -38,9 +38,10 @@ def format_output(kanji: str, reading: str) -> str:
 
 
 if __name__ == '__main__':
-    print(format_output('秘訣', 'ひけつ'))
-    print(format_output('食べた', 'たべた'))
-    print(format_output('高級レストラン', 'こうきゅうれすとらん'))
-    print(format_output('サイン会', 'さいんかい'))
-    print(format_output('あり得る', 'ありえる'))
-    print(format_output('取って置き', 'とっておき'))
+    assert (format_output('秘訣', 'ひけつ') == ' 秘訣[ひけつ]')
+    assert (format_output('食べた', 'たべた') == ' 食[た]べた')
+    assert (format_output('高級レストラン', 'こうきゅうれすとらん') == ' 高級[こうきゅう]レストラン')
+    assert (format_output('サイン会', 'さいんかい') == 'サイン 会[かい]')
+    assert (format_output('あり得る', 'ありえる') == 'あり 得[え]る')
+    assert (format_output('取って置き', 'とっておき') == ' 取[と]って 置[お]き')
+    print("Done.")
