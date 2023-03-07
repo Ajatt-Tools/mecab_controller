@@ -71,13 +71,6 @@ def find_executable(name: str) -> str:
 # Mecab
 ##########################################################################
 
-class ParsedToken(NamedTuple):
-    word: str
-    headword: str
-    katakana_reading: Optional[str]
-    part_of_speech: Optional[str]
-    inflection: Optional[str]
-
 
 class BasicMecabController:
     _mecab_cmd = [
@@ -117,6 +110,14 @@ class BasicMecabController:
         return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
 
 
+class MecabParsedToken(NamedTuple):
+    word: str
+    headword: str
+    katakana_reading: Optional[str]
+    part_of_speech: Optional[str]
+    inflection: Optional[str]
+
+
 class MecabController(BasicMecabController):
     _add_mecab_args = [
         # Format: word,headword,katakana reading,part of speech,inflection
@@ -139,7 +140,7 @@ class MecabController(BasicMecabController):
         text = re.sub(r"\[\[type:[^]]+]]", "", text)
         return text.strip()
 
-    def translate(self, expr: str) -> Iterable[ParsedToken]:
+    def translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """ Returns a parsed token for each word in expr. """
         expr = self.escape_text(expr)
 
@@ -156,7 +157,7 @@ class MecabController(BasicMecabController):
 
                 if self._verbose:
                     print(word, katakana_reading, headword, part_of_speech, inflection, sep='\t')
-                yield ParsedToken(
+                yield MecabParsedToken(
                     word=word,
                     headword=headword,
                     katakana_reading=katakana_reading,
@@ -165,6 +166,7 @@ class MecabController(BasicMecabController):
                 )
 
     def reading(self, expr: str) -> str:
+        """ Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
         substrings = []
         for out in self.translate(expr):
             substrings.append(
