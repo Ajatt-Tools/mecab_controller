@@ -45,7 +45,7 @@ else:
     si = None
 
 
-def normalize_for_platform(popen: List[str]) -> List[str]:
+def normalize_for_platform(popen: list[str]) -> list[str]:
     if isWin:
         popen = [os.path.normpath(x) for x in popen]
     return popen
@@ -80,7 +80,7 @@ class BasicMecabController:
         '-u', os.path.join(SUPPORT_DIR, "user_dic.dic"),
     ]
 
-    def __init__(self, mecab_cmd: List[str] = None, mecab_args: List[str] = None, *args, **kwargs):
+    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
         os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
