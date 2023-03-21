@@ -44,4 +44,6 @@ if __name__ == '__main__':
     assert (format_output('サイン会', 'さいんかい') == 'サイン 会[かい]')
     assert (format_output('あり得る', 'ありえる') == 'あり 得[え]る')
     assert (format_output('取って置き', 'とっておき') == ' 取[と]って 置[お]き')
+    assert (format_output('あなた方', 'あなたがた') == 'あなた 方[がた]')
+    assert (format_output('突っ込んだ', 'つっこんだ') == ' 突[つ]っ 込[こ]んだ')
     print("Done.")
