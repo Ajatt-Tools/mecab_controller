@@ -52,6 +52,10 @@ def normalize_for_platform(popen: list[str]) -> list[str]:
 
 
 def find_executable(name: str) -> str:
+    """
+    If possible, use the executable installed in the system.
+    Otherwise, use the executable provided in the support directory.
+    """
     from distutils.spawn import find_executable as find
     if cmd := find(name):
         return cmd
