@@ -76,10 +76,24 @@ def find_executable(name: str) -> str:
 ##########################################################################
 
 
+def find_best_dic_dir():
+    """
+    If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
+    """
+    possible_locations = (
+        '/usr/lib/mecab/dic/mecab-ipadic-neologd',
+        '/usr/lib/mecab/dic/ipadic',
+    )
+    for directory in possible_locations:
+        if os.path.isdir(directory):
+            return directory
+    return SUPPORT_DIR
+
+
 class BasicMecabController:
     _mecab_cmd = [
         find_executable('mecab'),
-        '-d', SUPPORT_DIR,
+        '-d', find_best_dic_dir(),
         '-r', os.path.join(SUPPORT_DIR, "mecabrc"),
         '-u', os.path.join(SUPPORT_DIR, "user_dic.dic"),
     ]
