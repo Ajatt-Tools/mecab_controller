@@ -1,7 +1,9 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org>
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-__all__ = ['to_katakana', 'to_hiragana', 'is_kana_str']
+import re
+
+__all__ = ['to_katakana', 'to_hiragana', 'is_kana_str', 'kana_to_moras']
 
 # Define characters
 HIRAGANA = "ぁあぃいぅうぇえぉおかがか゚きぎき゚くぐく゚けげけ゚こごこ゚さざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖゝゞ"
@@ -10,6 +12,12 @@ KATAKANA = "ァアィイゥウェエォオカガカ゚キギキ゚クグク゚�
 # Translation tables
 KATAKANA_TO_HIRAGANA = str.maketrans(KATAKANA, HIRAGANA)
 HIRAGANA_TO_KATAKANA = str.maketrans(HIRAGANA, KATAKANA)
+
+RE_ONE_MORA = re.compile(r'.゚?[ァィゥェォャュョぁぃぅぇぉゃゅょ]?')
+
+
+def kana_to_moras(kana: str) -> list[str]:
+    return re.findall(RE_ONE_MORA, kana)
 
 
 def to_hiragana(kana):
