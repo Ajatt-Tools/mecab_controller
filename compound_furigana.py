@@ -33,10 +33,10 @@ def dismember(expr: str) -> Optional[Dismembered]:
 def find_common_str_len(common_stem: str, common_reading: str):
     common_len = 0
     for c1, c2 in zip(common_stem, common_reading):
-        if c1 == c2:
-            common_len += 1
-        else:
-            return common_len
+        if c1 != c2:
+            break
+        common_len += 1
+    return common_len
 
 
 def find_common_kana(expr: Dismembered) -> Optional[CompoundSplit]:
