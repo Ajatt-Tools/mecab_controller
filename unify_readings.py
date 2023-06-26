@@ -67,6 +67,7 @@ EQUIVALENT_SOUNDS = {
     'ごお': 'ごー',
     'ひい': 'ひー',
     'へい': 'ヘー',
+    'しい': 'しー',
     'ぢ': 'じ',
     'づ': 'ず',
     'を': 'お',
@@ -112,6 +113,7 @@ def main():
     assert unify_repr('おはよう') == 'おはよー'
     assert unify_repr('おお') == 'おー'
     assert unify_repr('よじょうはん') == 'よじょーはん'
+    assert unify_repr('たましい') == 'たましー'
     assert literal_pronunciation('がっこう') == 'ガッコー'
     print("Ok.")
 
