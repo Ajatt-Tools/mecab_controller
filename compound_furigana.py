@@ -3,6 +3,8 @@
 
 from typing import NamedTuple, Optional
 
+__all__ = ['break_compound_furigana', ]
+
 
 class Dismembered(NamedTuple):
     word: str
