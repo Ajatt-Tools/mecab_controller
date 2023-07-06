@@ -77,6 +77,7 @@ EQUIVALENT_SOUNDS = {
     'ぢ': 'じ',
     'づ': 'ず',
     'を': 'お',
+    'ゔ': 'ぶ',
 }
 EQUIVALENT_SOUNDS |= {to_katakana(key): to_katakana(val) for key, val in EQUIVALENT_SOUNDS.items()}
 
