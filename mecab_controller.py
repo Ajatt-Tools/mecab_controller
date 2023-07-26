@@ -23,7 +23,8 @@ import os
 import re
 import subprocess
 import sys
-from typing import Optional, NamedTuple, Iterable
+from typing import Optional, NamedTuple
+from collections.abc import Iterable
 
 from .format import format_output
 from .kana_conv import to_hiragana, is_kana_str, to_katakana
