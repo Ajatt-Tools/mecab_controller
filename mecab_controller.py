@@ -180,9 +180,9 @@ class MecabController(BasicMecabController):
                 yield MecabParsedToken(
                     word=word,
                     headword=headword,
-                    katakana_reading=katakana_reading,
-                    part_of_speech=part_of_speech,
-                    inflection=inflection
+                    katakana_reading=(katakana_reading or None),
+                    part_of_speech=(part_of_speech or None),
+                    inflection=(inflection or None),
                 )
 
     def reading(self, expr: str) -> str:
