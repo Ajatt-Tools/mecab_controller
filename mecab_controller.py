@@ -1,175 +1,65 @@
-# Japanese support add-on for Anki 2.1
-# Copyright (C) 2021  Ren Tatsumoto. <tatsu at autistici.org>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# Parts of this file were based on Japanese Support:
-# https://github.com/ankitects/anki-addons/blob/main/code/japanese/reading.py
-#
-# Any modifications to this file must keep this entire header intact.
+# Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
+# License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-import os
 import re
-import subprocess
-import sys
-from typing import Optional, NamedTuple
 from collections.abc import Iterable
 
-from .format import format_output
-from .kana_conv import to_hiragana, is_kana_str, to_katakana
-
-isMac = sys.platform.startswith("darwin")
-isWin = sys.platform.startswith("win32")
-
-SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
-
-if not os.path.isfile(mecabrc := os.path.join(SUPPORT_DIR, "mecabrc")):
-    with open(mecabrc, 'w') as f:
-        # create mecabrc if it doesn't exist
-        f.write("")
-
-if isWin:
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-else:
-    si = None
-
-
-def normalize_for_platform(popen: list[str]) -> list[str]:
-    if isWin:
-        popen = [os.path.normpath(x) for x in popen]
-    return popen
-
-
-def find_executable(name: str) -> str:
-    """
-    If possible, use the executable installed in the system.
-    Otherwise, use the executable provided in the support directory.
-    """
-    from distutils.spawn import find_executable as find
-    if cmd := find(name):
-        return cmd
-    else:
-        cmd = os.path.join(SUPPORT_DIR, name)
-        if isWin:
-            cmd += '.exe'
-        elif isMac:
-            cmd += '.mac'
-        else:
-            cmd += '.lin'
-        if not isWin:
-            os.chmod(cmd, 0o755)
-        return cmd
+try:
+    from .basic_types import Components, Separators, MecabParsedToken
+    from .format import format_output
+    from .kana_conv import to_hiragana, is_kana_str, to_katakana
+    from .basic_mecab_controller import BasicMecabController
+except ImportError:
+    from basic_types import Components, Separators, MecabParsedToken
+    from format import format_output
+    from kana_conv import to_hiragana, is_kana_str, to_katakana
+    from basic_mecab_controller import BasicMecabController
 
 
 # Mecab
 ##########################################################################
 
 
-def find_best_dic_dir():
-    """
-    If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
-    """
-    possible_locations = (
-        '/usr/lib/mecab/dic/mecab-ipadic-neologd',
-        '/usr/lib/mecab/dic/ipadic',
-        '/usr/local/lib/mecab/dic/ipadic' # for `brew install mecab-ipadic`
-    )
-    for directory in possible_locations:
-        if os.path.isdir(directory):
-            return directory
-    return SUPPORT_DIR
-
-
-class BasicMecabController:
-    _mecab_cmd = [
-        find_executable('mecab'),
-        '-d', find_best_dic_dir(),
-        '-r', os.path.join(SUPPORT_DIR, "mecabrc"),
-        '-u', os.path.join(SUPPORT_DIR, "user_dic.dic"),
-    ]
-
-    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
-        os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
-        os.environ['LD_LIBRARY_PATH'] = SUPPORT_DIR
-        print('mecab cmd:', self._mecab_cmd)
-
-    def run(self, expr: str) -> str:
-        expr = expr.encode('utf-8', 'ignore') + b'\n'
-        try:
-            proc = subprocess.Popen(
-                self._mecab_cmd,
-                bufsize=-1,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                startupinfo=si,
-            )
-        except OSError:
-            raise Exception("Please ensure your Linux system has 64 bit binary support.")
-
-        try:
-            outs, errs = proc.communicate(expr, timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            outs, errs = proc.communicate()
-
-        return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
-
-
-class MecabParsedToken(NamedTuple):
-    word: str
-    headword: str
-    katakana_reading: Optional[str]
-    part_of_speech: Optional[str]
-    inflection: Optional[str]
+def escape_text(text: str) -> str:
+    """Strip characters that trip up mecab."""
+    text = text.replace("\n", " ")
+    text = text.replace('\uff5e', "~")
+    text = re.sub(r"<[^<>]+>", "", text)
+    text = re.sub(r"\[sound:[^]]+]", "", text)
+    text = re.sub(r"\[\[type:[^]]+]]", "", text)
+    return text.strip()
 
 
 class MecabController(BasicMecabController):
     _add_mecab_args = [
-        # Format: word,headword,katakana reading,part of speech,inflection
-        '--node-format=%m,%f[6],%f[7],%f[0],%f[5]\t',
-        '--unk-format=%m\t',
-        '--eos-format=\n',
+        '--node-format='
+        + Separators.component.join(component for component in Components)
+        + Separators.node,
+        '--unk-format='
+        + Components.word
+        + Separators.node,
+        '--eos-format='
+        + Separators.footer,
     ]
 
     def __init__(self, verbose: bool = False, *args, **kwargs):
         super().__init__(mecab_args=self._add_mecab_args, *args, **kwargs)
         self._verbose = verbose
 
-    @staticmethod
-    def escape_text(text: str) -> str:
-        """Strip characters that trip up mecab."""
-        text = text.replace("\n", " ")
-        text = text.replace('\uff5e', "~")
-        text = re.sub(r'<[^<>]+>', '', text)
-        text = re.sub(r"\[sound:[^]]+]", "", text)
-        text = re.sub(r"\[\[type:[^]]+]]", "", text)
-        return text.strip()
-
     def translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """ Returns a parsed token for each word in expr. """
-        expr = self.escape_text(expr)
-
-        for section in self.run(expr).split('\t'):
+        expr = escape_text(expr)
+        for section in self.run(expr).split(Separators.node):
+            if section == Separators.footer:
+                break
+            # ignore empty sections (can be at the end of a node)
             if section:
+                components = section.split(Separators.component)
                 try:
-                    word, headword, katakana_reading, part_of_speech, inflection = section.split(',')
+                    word, headword, katakana_reading, part_of_speech, inflection = components
                 except ValueError:
-                    word, headword, katakana_reading = (section,) * 3
+                    assert len(components) == 1  # unknown to mecab, gave the same word back
+                    word, headword, katakana_reading = components * 3
                     part_of_speech, inflection = None, None
 
                 if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
@@ -195,3 +85,28 @@ class MecabController(BasicMecabController):
                 else out.word
             )
         return ''.join(substrings).strip()
+
+
+def main():
+    mecab = MecabController()
+
+    try_expressions = (
+        "カリン、自分でまいた種は自分で刈り取れ",
+        "昨日、林檎を2個買った。",
+        "真莉、大好きだよん＾＾",
+        "彼２０００万も使った。",
+        "彼二千三百六十円も使った。",
+        "千葉",
+        "昨日すき焼きを食べました",
+        "二人の美人",
+        "詳細はお気軽にお問い合わせ下さい。",
+        "Lorem ipsum dolor sit amet. Съешь ещё этих мягких французских булок, да выпей же чаю.",
+    )
+    for expr in try_expressions:
+        for token in mecab.translate(expr):
+            print(token)
+        print(mecab.reading(expr))
+
+
+if __name__ == '__main__':
+    main()
