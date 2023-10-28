@@ -5,12 +5,12 @@ import re
 from collections.abc import Iterable
 
 try:
-    from .basic_types import Components, Separators, MecabParsedToken
+    from .basic_types import Components, Separators, MecabParsedToken, PartOfSpeech
     from .format import format_output
     from .kana_conv import to_hiragana, is_kana_str, to_katakana
     from .basic_mecab_controller import BasicMecabController
 except ImportError:
-    from basic_types import Components, Separators, MecabParsedToken
+    from basic_types import Components, Separators, MecabParsedToken, PartOfSpeech
     from format import format_output
     from kana_conv import to_hiragana, is_kana_str, to_katakana
     from basic_mecab_controller import BasicMecabController
@@ -58,7 +58,7 @@ class MecabController(BasicMecabController):
                 try:
                     word, headword, katakana_reading, part_of_speech, inflection = components
                 except ValueError:
-                    assert len(components) == 1  # unknown to mecab, gave the same word back
+                    # unknown to mecab, gave the same word back
                     word, headword, katakana_reading = components * 3
                     part_of_speech, inflection = None, None
 
@@ -71,7 +71,7 @@ class MecabController(BasicMecabController):
                     word=word,
                     headword=headword,
                     katakana_reading=(katakana_reading or None),
-                    part_of_speech=(part_of_speech or None),
+                    part_of_speech=PartOfSpeech(part_of_speech or None),
                     inflection=(inflection or None),
                 )
 
