@@ -8,6 +8,7 @@ import sys
 IS_MAC = sys.platform.startswith("darwin")
 IS_WIN = sys.platform.startswith("win32")
 SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
+INPUT_BUFFER_SIZE = str(819200)
 
 if not os.path.isfile(mecabrc := os.path.join(SUPPORT_DIR, "mecabrc")):
     with open(mecabrc, 'w') as f:
@@ -72,6 +73,8 @@ class BasicMecabController:
         + os.path.join(SUPPORT_DIR, "mecabrc"),
         '--userdic='
         + os.path.join(SUPPORT_DIR, "user_dic.dic"),
+        '--input-buffer-size='
+        + INPUT_BUFFER_SIZE,
     ]
 
     def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, *args, **kwargs):
