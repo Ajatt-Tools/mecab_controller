@@ -72,7 +72,7 @@ class MecabController(BasicMecabController):
                     headword=headword,
                     katakana_reading=(katakana_reading or None),
                     part_of_speech=PartOfSpeech(part_of_speech or None),
-                    inflection=(inflection or None),
+                    inflection_type=(inflection or None),
                 )
 
     def reading(self, expr: str) -> str:

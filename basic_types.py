@@ -61,7 +61,10 @@ class MecabParsedToken(NamedTuple):
     headword: str
     katakana_reading: Optional[str]
     part_of_speech: PartOfSpeech
-    inflection: Optional[str]
+    inflection_type: Optional[str]
+
+
+assert tuple(MecabParsedToken._fields) == tuple(Components.__dict__.keys())
 
 
 def main():
