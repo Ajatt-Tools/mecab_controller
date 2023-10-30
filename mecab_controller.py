@@ -5,12 +5,12 @@ import re
 from collections.abc import Iterable
 
 try:
-    from .basic_types import Components, Separators, MecabParsedToken, PartOfSpeech
+    from .basic_types import Components, Separators, MecabParsedToken, PartOfSpeech, Inflection
     from .format import format_output
     from .kana_conv import to_hiragana, is_kana_str, to_katakana
     from .basic_mecab_controller import BasicMecabController
 except ImportError:
-    from basic_types import Components, Separators, MecabParsedToken, PartOfSpeech
+    from basic_types import Components, Separators, MecabParsedToken, PartOfSpeech, Inflection
     from format import format_output
     from kana_conv import to_hiragana, is_kana_str, to_katakana
     from basic_mecab_controller import BasicMecabController
@@ -72,7 +72,7 @@ class MecabController(BasicMecabController):
                     headword=headword,
                     katakana_reading=(katakana_reading or None),
                     part_of_speech=PartOfSpeech(part_of_speech or None),
-                    inflection_type=(inflection or None),
+                    inflection_type=Inflection(inflection or None),
                 )
 
     def reading(self, expr: str) -> str:
@@ -101,6 +101,7 @@ def main():
         "二人の美人",
         "詳細はお気軽にお問い合わせ下さい。",
         "Lorem ipsum dolor sit amet. Съешь ещё этих мягких французских булок, да выпей же чаю.",
+        "粗末な家に住んでいる",
     )
     for expr in try_expressions:
         for token in mecab.translate(expr):

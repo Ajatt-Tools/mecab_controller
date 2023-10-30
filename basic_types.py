@@ -1,9 +1,11 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
+import dataclasses
 import enum
+from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Optional, NamedTuple, Iterable
+from typing import Optional
 
 
 class IterableSimpleNamespace(Iterable, SimpleNamespace):
@@ -56,15 +58,55 @@ class PartOfSpeech(enum.Enum):
         return cls.unknown
 
 
-class MecabParsedToken(NamedTuple):
+class Inflection(enum.Enum):
+    unknown = None
+    garu_attached = "ガル接続"  # e.g 苦し (+ がる)
+    hypothetical = "仮定形"  # e.g. 出かけれ (+ ば)
+    contraction_1 = "仮定縮約１"  # e.g. 来れば => 来りゃ, ていれば => てりゃ
+    contraction_2 = "仮定縮約２"  # e.g. なければ => なきゃ
+    nominal_connection = "体言接続"  # たり => たる, 良い => 良き, らしい => らしき
+    nominal_connection_special = "体言接続特殊"  # 負ける => 負けん, 戻れる => 戻れん, する => すん
+    nominal_connection_2 = "体言接続特殊２"  # 変わる => 変わ, とちる => とち, 携わる => 携わ
+    imperative_e = "命令ｅ"  # に+なれ, (で+)あれ, (と+)思え, (ください+)ませ
+    imperative_i = "命令ｉ"  # (ご覧+)ください
+    imperative_ro = "命令ｒｏ"  # (信用+)しろ, (を+)見せろ
+    imperative_yo = "命令ｙｏ"  # (を+)助けよ, 与えよ, せよ
+    dictionary_form = "基本形"  # する, 言う
+    modern_dictionary_form = "現代基本形"
+    classical_dictionary_form = "文語基本形"
+    sound_change_dictionary_form = "音便基本形"
+    dictionary_form_geminate_contraction = "基本形 - 促音便"
+    irrealis_u = "未然ウ接続"
+    irrealis_nu = "未然ヌ接続"  # よから(+ぬ), (感謝+)せ(+ざる), 少なから(+ぬ)
+    irrealis_reru = "未然レル接続"  # (解消+)さ(+れる), (失礼+)さ(+せ)
+    irrealis = "未然形"  # (に+)持ち込ま(+れる), (しか+)知ら(+なかっ), (言葉+)行か(+なく)
+    irrealis_special = "未然特殊"  # わかん+ない
+    continuative_gozai = "連用ゴザイ接続"  # 有難う(+御座い)
+    continuative_ta = "連用タ接続"  # 聞い(+て), (が+)分かっ(+て), (一度+)読ん(+で)
+    continuative_te = "連用テ接続"  # (見え+)なく, (問題+)なく, 美味しく, 熱く
+    continuative_de = "連用デ接続"  # (寝+)ない(+で), (変え+)ない(+で), (忘れ+)ない(+で)
+    continuative_ni = "連用ニ接続"  # (消さ+)ず(+に)
+    continuative = "連用形"  # 見つかり, 教わり, いただき, 探し
+
+    @classmethod
+    def _missing_(cls, value):
+        """
+        If mecab for some reason outputs something that's not a member of this enum,
+        fall back to "unknown".
+        """
+        return cls.unknown
+
+
+@dataclasses.dataclass(frozen=True)
+class MecabParsedToken:
     word: str
     headword: str
-    katakana_reading: Optional[str]
+    katakana_reading: Optional[str]  # inflected reading
     part_of_speech: PartOfSpeech
-    inflection_type: Optional[str]
+    inflection_type: Inflection
 
 
-assert tuple(MecabParsedToken._fields) == tuple(Components.__dict__.keys())
+assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(Components.__dict__.keys())
 
 
 def main():
