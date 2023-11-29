@@ -20,11 +20,11 @@ def kana_to_moras(kana: str) -> list[str]:
     return re.findall(RE_ONE_MORA, kana)
 
 
-def to_hiragana(kana):
+def to_hiragana(kana: str) -> str:
     return kana.translate(KATAKANA_TO_HIRAGANA)
 
 
-def to_katakana(kana):
+def to_katakana(kana: str) -> str:
     return kana.translate(HIRAGANA_TO_KATAKANA)
 
 
