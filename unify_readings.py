@@ -7,6 +7,7 @@ except ImportError:
     from kana_conv import to_katakana
 
 EQUIVALENT_SOUNDS = {
+    'ふうう': 'ふーう',
     'いまは': 'いまわ',
     'おおう': 'おーう',
     'じゃあ': 'じゃー',
