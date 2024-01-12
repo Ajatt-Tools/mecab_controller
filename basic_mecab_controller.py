@@ -28,8 +28,11 @@ def find_best_dic_dir():
     """
     possible_locations = (
         '/usr/lib/mecab/dic/mecab-ipadic-neologd',
+        '/usr/local/lib/mecab/dic/mecab-ipadic-neologd',
+        '/opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd',
         '/usr/lib/mecab/dic/ipadic',
-        '/usr/local/lib/mecab/dic/ipadic'  # for `brew install mecab-ipadic`
+        '/usr/local/lib/mecab/dic/ipadic',  # for `brew install mecab-ipadic`
+        '/opt/homebrew/lib/mecab/dic/ipadic',
     )
     for directory in possible_locations:
         if os.path.isdir(directory):
