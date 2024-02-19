@@ -2,9 +2,12 @@
 
 Mecab controller is a simple wrapper around
 [mecab](https://github.com/taku910/mecab).
-It can be used to generate furigana for Japanese words and sentences.
+It was created primarily to be used in
+[AJT Japanese](https://ankiweb.net/shared/info/1344485230),
+an Anki add-on
+that generates furigana for Japanese text.
 
-Example:
+Example of standalone usage:
 
 ```
 >>> import mecab_controller
