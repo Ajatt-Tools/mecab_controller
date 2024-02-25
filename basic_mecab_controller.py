@@ -80,12 +80,14 @@ class BasicMecabController:
         + INPUT_BUFFER_SIZE,
     ]
 
-    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
+        super().__init__()
+        self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
         os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
         os.environ['LD_LIBRARY_PATH'] = SUPPORT_DIR
-        print('mecab cmd:', self._mecab_cmd)
+        if self._verbose:
+            print('mecab cmd:', self._mecab_cmd)
 
     def run(self, expr: str) -> str:
         expr = expr.encode('utf-8', 'ignore') + b'\n'

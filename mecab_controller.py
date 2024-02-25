@@ -42,9 +42,12 @@ class MecabController(BasicMecabController):
         + Separators.footer,
     ]
 
-    def __init__(self, verbose: bool = False, *args, **kwargs):
-        super().__init__(mecab_args=self._add_mecab_args, *args, **kwargs)
-        self._verbose = verbose
+    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
+        super().__init__(
+            mecab_cmd=mecab_cmd,
+            mecab_args=(mecab_args or self._add_mecab_args),
+            verbose=verbose
+        )
 
     def translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """ Returns a parsed token for each word in expr. """
