@@ -105,11 +105,15 @@ def main():
         "詳細はお気軽にお問い合わせ下さい。",
         "Lorem ipsum dolor sit amet. Съешь ещё этих мягких французских булок, да выпей же чаю.",
         "粗末な家に住んでいる",
+        "向けていた目",
+        "軽そうに見える",
+        "相合い傘",
     )
     for expr in try_expressions:
         for token in mecab.translate(expr):
             print(token)
         print(mecab.reading(expr))
+        print()
 
 
 if __name__ == '__main__':
