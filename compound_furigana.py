@@ -11,6 +11,9 @@ class Dismembered(NamedTuple):
     reading: str
     tail: str
 
+    def assemble(self):
+        return f'{self.word}[{self.reading}]{self.tail}'
+
 
 class CompoundSplit(NamedTuple):
     first: Dismembered
@@ -54,10 +57,7 @@ def find_common_kana(expr: Dismembered) -> Optional[CompoundSplit]:
 
 def break_compound_furigana_chunk(expr: str) -> str:
     if (d := dismember(expr)) and (c := find_common_kana(d)):
-        return (
-                f'{c.first.word}[{c.first.reading}]{c.first.tail} '
-                + break_compound_furigana_chunk(f'{c.second.word}[{c.second.reading}]{c.second.tail}')
-        )
+        return f"{c.first.assemble()} {break_compound_furigana_chunk(c.second.assemble())}"
     else:
         return expr
 
