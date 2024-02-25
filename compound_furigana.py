@@ -33,7 +33,7 @@ def dismember(expr: str) -> Optional[Dismembered]:
         )
 
 
-def find_common_str_len(common_stem: str, common_reading: str):
+def find_common_prefix_len(common_stem: str, common_reading: str):
     common_len = 0
     for c1, c2 in zip(common_stem, common_reading):
         if c1 != c2:
@@ -43,15 +43,19 @@ def find_common_str_len(common_stem: str, common_reading: str):
 
 
 def find_common_kana(expr: Dismembered) -> Optional[CompoundSplit]:
-    start_index = max(1, find_common_str_len(expr.word, expr.reading))
+    start_index = max(1, find_common_prefix_len(expr.word, expr.reading))
 
     for i in range(start_index, len(expr.word)):
         for j in range(start_index, len(expr.reading)):
             if expr.word[i] == expr.reading[j]:
-                common_len = find_common_str_len(expr.word[i:], expr.reading[j:])
+                prefix_len = find_common_prefix_len(expr.word[i:], expr.reading[j:])
+                if i > j:
+                    # a situation where there are more kanji than kana, e.g. 相合[あ]
+                    # which might(?) indicate that we have to look further.
+                    continue
                 return CompoundSplit(
-                    Dismembered(expr.word[:i], expr.reading[:j], expr.reading[j:j + common_len]),
-                    Dismembered(expr.word[i + common_len:], expr.reading[j + common_len:], expr.tail)
+                    Dismembered(expr.word[:i], expr.reading[:j], expr.reading[j:j + prefix_len]),
+                    Dismembered(expr.word[i + prefix_len:], expr.reading[j + prefix_len:], expr.tail)
                 )
 
 
