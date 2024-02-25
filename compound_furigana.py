@@ -71,10 +71,12 @@ def break_compound_furigana(expr: str) -> str:
 
 
 if __name__ == "__main__":
+    assert (dismember("相合い傘[あいあいがさ]") == Dismembered(word='相合い傘', reading='あいあいがさ', tail=''))
     assert (break_compound_furigana(' 取って置[とってお]き') == ' 取[と]って 置[お]き')
     assert (break_compound_furigana('言い方[いいかた]') == '言[い]い 方[かた]')
     assert (break_compound_furigana('丸め込[まるめこ]む') == '丸[まる]め 込[こ]む')
     assert (break_compound_furigana('繋[つなが]る') == '繋[つなが]る')
     assert (break_compound_furigana('お 問い合[といあ]わせ') == 'お 問[と]い 合[あ]わせ')
     assert (break_compound_furigana('あなた 方[がた]') == 'あなた 方[がた]')
+    assert (break_compound_furigana('相合い傘[あいあいがさ]') == '相合[あいあ]い 傘[がさ]')
     print("Done.")
