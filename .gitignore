@@ -3,3 +3,5 @@ __pycache__
 /manifest.json
 /meta.json
 /*.ankiaddon
+/build
+*.egg-info
