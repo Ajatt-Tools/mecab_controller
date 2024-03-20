@@ -39,6 +39,17 @@ def find_best_dic_dir():
     return SUPPORT_DIR
 
 
+def support_exe_suffix() -> str:
+    """
+    The mecab executable file in the "support" dir has a different suffix depending on the platform.
+    """
+    if IS_WIN:
+        return ".exe"
+    elif IS_MAC:
+        return ".mac"
+    else:
+        return ".lin"
+
 def find_executable(name: str) -> str:
     """
     If possible, use the executable installed in the system.
@@ -49,13 +60,9 @@ def find_executable(name: str) -> str:
     if cmd := find(name):
         return cmd
     else:
-        cmd = os.path.join(SUPPORT_DIR, name)
-        if IS_WIN:
-            cmd += ".exe"
-        elif IS_MAC:
-            cmd += ".mac"
-        else:
-            cmd += ".lin"
+        # find file in the "support" dir.
+        cmd = os.path.join(SUPPORT_DIR, name) + support_exe_suffix()
+        assert os.path.isfile(cmd), f"{cmd} doesn't exist. Can't recover."
         if not IS_WIN:
             os.chmod(cmd, 0o755)
         return cmd
