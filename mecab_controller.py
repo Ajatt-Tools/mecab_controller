@@ -23,7 +23,7 @@ except ImportError:
 def escape_text(text: str) -> str:
     """Strip characters that trip up mecab."""
     text = text.replace("\n", " ")
-    text = text.replace('\uff5e', "~")
+    text = text.replace("\uff5e", "~")
     text = re.sub(r"<[^<>]+>", "", text)
     text = re.sub(r"\[sound:[^]]+]", "", text)
     text = re.sub(r"\[\[type:[^]]+]]", "", text)
@@ -32,25 +32,20 @@ def escape_text(text: str) -> str:
 
 class MecabController(BasicMecabController):
     _add_mecab_args = [
-        '--node-format='
-        + Separators.component.join(component for component in Components)
-        + Separators.node,
-        '--unk-format='
-        + Components.word
-        + Separators.node,
-        '--eos-format='
-        + Separators.footer,
+        "--node-format=" + Separators.component.join(component for component in Components) + Separators.node,
+        "--unk-format=" + Components.word + Separators.node,
+        "--eos-format=" + Separators.footer,
     ]
 
     def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
         super().__init__(
             mecab_cmd=mecab_cmd,
             mecab_args=(mecab_args or self._add_mecab_args),
-            verbose=verbose
+            verbose=verbose,
         )
 
     def translate(self, expr: str) -> Iterable[MecabParsedToken]:
-        """ Returns a parsed token for each word in expr. """
+        """Returns a parsed token for each word in expr."""
         expr = escape_text(expr)
         for section in self.run(expr).split(Separators.node):
             if section == Separators.footer:
@@ -69,7 +64,7 @@ class MecabController(BasicMecabController):
                     katakana_reading = None
 
                 if self._verbose:
-                    print(word, katakana_reading, headword, part_of_speech, inflection, sep='\t')
+                    print(word, katakana_reading, headword, part_of_speech, inflection, sep="\t")
                 yield MecabParsedToken(
                     word=word,
                     headword=headword,
@@ -79,15 +74,13 @@ class MecabController(BasicMecabController):
                 )
 
     def reading(self, expr: str) -> str:
-        """ Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
+        """Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
         substrings = []
         for out in self.translate(expr):
             substrings.append(
-                format_output(out.word, to_hiragana(out.katakana_reading))
-                if out.katakana_reading
-                else out.word
+                format_output(out.word, to_hiragana(out.katakana_reading)) if out.katakana_reading else out.word
             )
-        return ''.join(substrings).strip()
+        return "".join(substrings).strip()
 
 
 def main():
@@ -116,5 +109,5 @@ def main():
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

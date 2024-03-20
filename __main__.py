@@ -11,5 +11,5 @@ def main():
     print(mecab.reading(" ".join(sys.argv[1:])))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -37,15 +37,15 @@ def format_output(kanji: str, reading: str) -> str:
     return break_compound_furigana(out_expr)
 
 
-if __name__ == '__main__':
-    assert (format_output('秘訣', 'ひけつ') == ' 秘訣[ひけつ]')
-    assert (format_output('食べた', 'たべた') == ' 食[た]べた')
-    assert (format_output('高級レストラン', 'こうきゅうれすとらん') == ' 高級[こうきゅう]レストラン')
-    assert (format_output('サイン会', 'さいんかい') == 'サイン 会[かい]')
-    assert (format_output('あり得る', 'ありえる') == 'あり 得[え]る')
-    assert (format_output('取って置き', 'とっておき') == ' 取[と]って 置[お]き')
-    assert (format_output('あなた方', 'あなたがた') == 'あなた 方[がた]')
-    assert (format_output('突っ込んだ', 'つっこんだ') == ' 突[つ]っ 込[こ]んだ')
-    assert (format_output('相合い傘', 'あいあいがさ') == " 相合[あいあ]い 傘[がさ]")
-    assert (format_output('あいあい傘', 'あいあいがさ') == "あいあい 傘[がさ]")
+if __name__ == "__main__":
+    assert format_output("秘訣", "ひけつ") == " 秘訣[ひけつ]"
+    assert format_output("食べた", "たべた") == " 食[た]べた"
+    assert format_output("高級レストラン", "こうきゅうれすとらん") == " 高級[こうきゅう]レストラン"
+    assert format_output("サイン会", "さいんかい") == "サイン 会[かい]"
+    assert format_output("あり得る", "ありえる") == "あり 得[え]る"
+    assert format_output("取って置き", "とっておき") == " 取[と]って 置[お]き"
+    assert format_output("あなた方", "あなたがた") == "あなた 方[がた]"
+    assert format_output("突っ込んだ", "つっこんだ") == " 突[つ]っ 込[こ]んだ"
+    assert format_output("相合い傘", "あいあいがさ") == " 相合[あいあ]い 傘[がさ]"
+    assert format_output("あいあい傘", "あいあいがさ") == "あいあい 傘[がさ]"
     print("Done.")

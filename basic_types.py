@@ -22,11 +22,11 @@ Separators = SimpleNamespace(
 
 Components = IterableSimpleNamespace(
     # What info about each word mecab should output to the user.
-    word='%m',
-    headword='%f[6]',
-    katakana_reading='%f[7]',
-    part_of_speech='%f[0]',
-    inflection_type='%f[5]',
+    word="%m",
+    headword="%f[6]",
+    katakana_reading="%f[7]",
+    part_of_speech="%f[0]",
+    inflection_type="%f[5]",
 )
 
 
@@ -34,6 +34,7 @@ class PartOfSpeech(enum.Enum):
     """
     Parts of speech that mecab can output.
     """
+
     unknown = None
     other = "その他"  # e.g. よ, ァ
     filler = "フィラー"  # e.g. なんか, あのー, ま, えーと
@@ -117,5 +118,5 @@ def main():
     print(PartOfSpeech("感動詞"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

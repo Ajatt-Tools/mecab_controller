@@ -3,7 +3,9 @@
 
 from typing import NamedTuple, Optional
 
-__all__ = ['break_compound_furigana', ]
+__all__ = [
+    "break_compound_furigana",
+]
 
 
 class Dismembered(NamedTuple):
@@ -12,7 +14,7 @@ class Dismembered(NamedTuple):
     tail: str
 
     def assemble(self):
-        return f'{self.word}[{self.reading}]{self.tail}'
+        return f"{self.word}[{self.reading}]{self.tail}"
 
 
 class CompoundSplit(NamedTuple):
@@ -21,15 +23,15 @@ class CompoundSplit(NamedTuple):
 
 
 def dismember(expr: str) -> Optional[Dismembered]:
-    if (furigana_start := expr.find('[')) < 1:
+    if (furigana_start := expr.find("[")) < 1:
         return None
-    elif (furigana_end := expr.find(']')) < 3:
+    elif (furigana_end := expr.find("]")) < 3:
         return None
     else:
         return Dismembered(
             expr[:furigana_start],
-            expr[furigana_start + 1:furigana_end],
-            expr[furigana_end + 1:]
+            expr[furigana_start + 1 : furigana_end],
+            expr[furigana_end + 1 :],
         )
 
 
@@ -54,9 +56,18 @@ def find_common_kana(expr: Dismembered) -> Optional[CompoundSplit]:
                     # which might(?) indicate that we have to look further.
                     continue
                 return CompoundSplit(
-                    Dismembered(expr.word[:word_idx], expr.reading[:reading_idx], expr.reading[reading_idx:reading_idx + prefix_len]),
-                    Dismembered(expr.word[word_idx + prefix_len:], expr.reading[reading_idx + prefix_len:], expr.tail)
+                    first=Dismembered(
+                        expr.word[:word_idx],
+                        expr.reading[:reading_idx],
+                        expr.reading[reading_idx : reading_idx + prefix_len],
+                    ),
+                    second=Dismembered(
+                        expr.word[word_idx + prefix_len :],
+                        expr.reading[reading_idx + prefix_len :],
+                        expr.tail,
+                    ),
                 )
+    return None
 
 
 def break_compound_furigana_chunk(expr: str) -> str:
@@ -67,16 +78,16 @@ def break_compound_furigana_chunk(expr: str) -> str:
 
 
 def break_compound_furigana(expr: str) -> str:
-    return ' '.join(map(break_compound_furigana_chunk, expr.split(' ')))
+    return " ".join(map(break_compound_furigana_chunk, expr.split(" ")))
 
 
 if __name__ == "__main__":
-    assert (dismember("相合い傘[あいあいがさ]") == Dismembered(word='相合い傘', reading='あいあいがさ', tail=''))
-    assert (break_compound_furigana(' 取って置[とってお]き') == ' 取[と]って 置[お]き')
-    assert (break_compound_furigana('言い方[いいかた]') == '言[い]い 方[かた]')
-    assert (break_compound_furigana('丸め込[まるめこ]む') == '丸[まる]め 込[こ]む')
-    assert (break_compound_furigana('繋[つなが]る') == '繋[つなが]る')
-    assert (break_compound_furigana('お 問い合[といあ]わせ') == 'お 問[と]い 合[あ]わせ')
-    assert (break_compound_furigana('あなた 方[がた]') == 'あなた 方[がた]')
-    assert (break_compound_furigana('相合い傘[あいあいがさ]') == '相合[あいあ]い 傘[がさ]')
+    assert dismember("相合い傘[あいあいがさ]") == Dismembered(word="相合い傘", reading="あいあいがさ", tail="")
+    assert break_compound_furigana(" 取って置[とってお]き") == " 取[と]って 置[お]き"
+    assert break_compound_furigana("言い方[いいかた]") == "言[い]い 方[かた]"
+    assert break_compound_furigana("丸め込[まるめこ]む") == "丸[まる]め 込[こ]む"
+    assert break_compound_furigana("繋[つなが]る") == "繋[つなが]る"
+    assert break_compound_furigana("お 問い合[といあ]わせ") == "お 問[と]い 合[あ]わせ"
+    assert break_compound_furigana("あなた 方[がた]") == "あなた 方[がた]"
+    assert break_compound_furigana("相合い傘[あいあいがさ]") == "相合[あいあ]い 傘[がさ]"
     print("Done.")

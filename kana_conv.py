@@ -3,7 +3,7 @@
 
 import re
 
-__all__ = ['to_katakana', 'to_hiragana', 'is_kana_str', 'kana_to_moras']
+__all__ = ["to_katakana", "to_hiragana", "is_kana_str", "kana_to_moras"]
 
 # Define characters
 HIRAGANA = "ぁあぃいぅうぇえぉおかがか゚きぎき゚くぐく゚けげけ゚こごこ゚さざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖゝゞ"
@@ -13,7 +13,7 @@ KATAKANA = "ァアィイゥウェエォオカガカ゚キギキ゚クグク゚�
 KATAKANA_TO_HIRAGANA = str.maketrans(KATAKANA, HIRAGANA)
 HIRAGANA_TO_KATAKANA = str.maketrans(HIRAGANA, KATAKANA)
 
-RE_ONE_MORA = re.compile(r'.゚?[ァィゥェォャュョぁぃぅぇぉゃゅょ]?')
+RE_ONE_MORA = re.compile(r".゚?[ァィゥェォャュョぁぃぅぇぉゃゅょ]?")
 
 
 def kana_to_moras(kana: str) -> list[str]:
@@ -29,11 +29,7 @@ def to_katakana(kana: str) -> str:
 
 
 def is_kana_char(char: str) -> bool:
-    return (
-            char in HIRAGANA
-            or char in KATAKANA
-            or char == 'ー'
-    )
+    return char in HIRAGANA or char in KATAKANA or char == "ー"
 
 
 def is_kana_str(word: str) -> bool:
@@ -41,14 +37,17 @@ def is_kana_str(word: str) -> bool:
 
 
 def main():
-    assert to_hiragana('<div>オープンソース形態素解析エンジンです。Test 😀') == '<div>おーぷんそーす形態素解析えんじんです。Test 😀'
-    assert to_katakana('お前はもう死んでいる。') == 'オ前ハモウ死ンデイル。'
-    assert to_katakana('いまり') == 'イマリ'
-    assert is_kana_str('ひらがなカタカナ') is True
-    assert is_kana_str('ニュース') is True
-    assert is_kana_str('故郷は') is False
+    assert (
+        to_hiragana("<div>オープンソース形態素解析エンジンです。Test 😀")
+        == "<div>おーぷんそーす形態素解析えんじんです。Test 😀"
+    )
+    assert to_katakana("お前はもう死んでいる。") == "オ前ハモウ死ンデイル。"
+    assert to_katakana("いまり") == "イマリ"
+    assert is_kana_str("ひらがなカタカナ") is True
+    assert is_kana_str("ニュース") is True
+    assert is_kana_str("故郷は") is False
     print("Ok.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

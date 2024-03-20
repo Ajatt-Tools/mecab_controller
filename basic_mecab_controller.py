@@ -27,12 +27,12 @@ def find_best_dic_dir():
     If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
     """
     possible_locations = (
-        '/usr/lib/mecab/dic/mecab-ipadic-neologd',
-        '/usr/local/lib/mecab/dic/mecab-ipadic-neologd',
-        '/opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd',
-        '/usr/lib/mecab/dic/ipadic',
-        '/usr/local/lib/mecab/dic/ipadic',  # for `brew install mecab-ipadic`
-        '/opt/homebrew/lib/mecab/dic/ipadic',
+        "/usr/lib/mecab/dic/mecab-ipadic-neologd",
+        "/usr/local/lib/mecab/dic/mecab-ipadic-neologd",
+        "/opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd",
+        "/usr/lib/mecab/dic/ipadic",
+        "/usr/local/lib/mecab/dic/ipadic",  # for `brew install mecab-ipadic`
+        "/opt/homebrew/lib/mecab/dic/ipadic",
     )
     for directory in possible_locations:
         if os.path.isdir(directory):
@@ -46,16 +46,17 @@ def find_executable(name: str) -> str:
     Otherwise, use the executable provided in the support directory.
     """
     from distutils.spawn import find_executable as find
+
     if cmd := find(name):
         return cmd
     else:
         cmd = os.path.join(SUPPORT_DIR, name)
         if IS_WIN:
-            cmd += '.exe'
+            cmd += ".exe"
         elif IS_MAC:
-            cmd += '.mac'
+            cmd += ".mac"
         else:
-            cmd += '.lin'
+            cmd += ".lin"
         if not IS_WIN:
             os.chmod(cmd, 0o755)
         return cmd
@@ -69,28 +70,24 @@ def normalize_for_platform(popen: list[str]) -> list[str]:
 
 class BasicMecabController:
     _mecab_cmd = [
-        find_executable('mecab'),
-        '--dicdir='
-        + find_best_dic_dir(),
-        '--rcfile='
-        + os.path.join(SUPPORT_DIR, "mecabrc"),
-        '--userdic='
-        + os.path.join(SUPPORT_DIR, "user_dic.dic"),
-        '--input-buffer-size='
-        + INPUT_BUFFER_SIZE,
+        find_executable("mecab"),
+        "--dicdir=" + find_best_dic_dir(),
+        "--rcfile=" + MECAB_RC_PATH,
+        "--userdic=" + os.path.join(SUPPORT_DIR, "user_dic.dic"),
+        "--input-buffer-size=" + INPUT_BUFFER_SIZE,
     ]
 
     def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
         super().__init__()
         self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
-        os.environ['DYLD_LIBRARY_PATH'] = SUPPORT_DIR
-        os.environ['LD_LIBRARY_PATH'] = SUPPORT_DIR
+        os.environ["DYLD_LIBRARY_PATH"] = SUPPORT_DIR
+        os.environ["LD_LIBRARY_PATH"] = SUPPORT_DIR
         if self._verbose:
-            print('mecab cmd:', self._mecab_cmd)
+            print("mecab cmd:", self._mecab_cmd)
 
     def run(self, expr: str) -> str:
-        expr = expr.encode('utf-8', 'ignore') + b'\n'
+        expr = expr.encode("utf-8", "ignore") + b"\n"
         try:
             proc = subprocess.Popen(
                 self._mecab_cmd,
@@ -109,7 +106,7 @@ class BasicMecabController:
             proc.kill()
             outs, errs = proc.communicate()
 
-        return outs.rstrip(b'\r\n').decode('utf-8', 'replace')
+        return outs.rstrip(b"\r\n").decode("utf-8", "replace")
 
 
 def main():
@@ -132,5 +129,5 @@ def main():
         print(mecab.run(expr))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
