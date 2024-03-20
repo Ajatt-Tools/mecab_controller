@@ -8,12 +8,9 @@ import sys
 IS_MAC = sys.platform.startswith("darwin")
 IS_WIN = sys.platform.startswith("win32")
 SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
+MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 INPUT_BUFFER_SIZE = str(819200)
 
-if not os.path.isfile(mecabrc := os.path.join(SUPPORT_DIR, "mecabrc")):
-    with open(mecabrc, 'w') as f:
-        # create mecabrc if it doesn't exist
-        f.write("")
 
 if IS_WIN:
     si = subprocess.STARTUPINFO()
@@ -68,6 +65,13 @@ def normalize_for_platform(popen: list[str]) -> list[str]:
     return popen
 
 
+def check_mecab_rc():
+    if not os.path.isfile(MECAB_RC_PATH):
+        with open(MECAB_RC_PATH, "w") as f:
+            # create mecabrc if it doesn't exist
+            f.write("")
+
+
 class BasicMecabController:
     _mecab_cmd = [
         find_executable("mecab"),
@@ -79,6 +83,7 @@ class BasicMecabController:
 
     def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
         super().__init__()
+        check_mecab_rc()
         self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
         os.environ["DYLD_LIBRARY_PATH"] = SUPPORT_DIR
