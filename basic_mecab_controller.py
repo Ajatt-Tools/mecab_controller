@@ -12,11 +12,13 @@ MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 INPUT_BUFFER_SIZE = str(819200)
 
 
-if IS_WIN:
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-else:
-    si = None
+def startup_info():
+    if IS_WIN:
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    else:
+        si = None
+    return si
 
 
 def find_best_dic_dir():
@@ -73,6 +75,7 @@ def check_mecab_rc():
 
 
 class BasicMecabController:
+    _startup_info = startup_info()
     _mecab_cmd = [
         find_executable("mecab"),
         "--dicdir=" + find_best_dic_dir(),
@@ -100,7 +103,7 @@ class BasicMecabController:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                startupinfo=si,
+                startupinfo=self._startup_info,
             )
         except OSError:
             raise Exception("Please ensure your Linux system has 64 bit binary support.")
