@@ -1,6 +1,7 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
+import functools
 import os
 import subprocess
 import sys
@@ -12,6 +13,7 @@ MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 INPUT_BUFFER_SIZE = str(819200)
 
 
+@functools.cache
 def startup_info():
     if IS_WIN:
         si = subprocess.STARTUPINFO()
@@ -50,6 +52,7 @@ def support_exe_suffix() -> str:
     else:
         return ".lin"
 
+
 def find_executable(name: str) -> str:
     """
     If possible, use the executable installed in the system.
@@ -82,7 +85,6 @@ def check_mecab_rc():
 
 
 class BasicMecabController:
-    _startup_info = startup_info()
     _mecab_cmd = [
         find_executable("mecab"),
         "--dicdir=" + find_best_dic_dir(),
@@ -110,7 +112,7 @@ class BasicMecabController:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                startupinfo=self._startup_info,
+                startupinfo=startup_info(),
             )
         except OSError:
             raise Exception("Please ensure your Linux system has 64 bit binary support.")
