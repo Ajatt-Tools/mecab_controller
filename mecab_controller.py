@@ -96,17 +96,18 @@ def main():
         "昨日すき焼きを食べました",
         "二人の美人",
         "詳細はお気軽にお問い合わせ下さい。",
-        "Lorem ipsum dolor sit amet. Съешь ещё этих мягких французских булок, да выпей же чаю.",
+        "Lorem ipsum dolor sit amet. ",
+        "Съешь ещё этих мягких французских булок, да выпей же чаю.",
         "粗末な家に住んでいる",
         "向けていた目",
         "軽そうに見える",
         "相合い傘",
     )
-    for expr in try_expressions:
-        for token in mecab.translate(expr):
-            print(token)
-        print(mecab.reading(expr))
-        print()
+    for idx, expr in enumerate(try_expressions):
+        print(f"expr  #{idx:02d}: {mecab.reading(expr)}")
+        for jdx, token in enumerate(mecab.translate(expr)):
+            print(f"token #{jdx:02d}: {token}")
+        print("." * 20)
 
 
 if __name__ == "__main__":
