@@ -5,6 +5,8 @@ import functools
 import os
 import subprocess
 import sys
+from typing import Optional
+from collections.abc import Sequence
 
 IS_MAC = sys.platform.startswith("darwin")
 IS_WIN = sys.platform.startswith("win32")
@@ -23,6 +25,7 @@ def startup_info():
     return si
 
 
+@functools.cache
 def find_best_dic_dir():
     """
     If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
@@ -41,6 +44,7 @@ def find_best_dic_dir():
     return SUPPORT_DIR
 
 
+@functools.cache
 def support_exe_suffix() -> str:
     """
     The mecab executable file in the "support" dir has a different suffix depending on the platform.
@@ -53,6 +57,7 @@ def support_exe_suffix() -> str:
         return ".lin"
 
 
+@functools.cache
 def find_executable(name: str) -> str:
     """
     If possible, use the executable installed in the system.
@@ -93,7 +98,12 @@ class BasicMecabController:
         "--input-buffer-size=" + INPUT_BUFFER_SIZE,
     ]
 
-    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
+    def __init__(
+        self,
+        mecab_cmd: Optional[Sequence[str]] = None,
+        mecab_args: Optional[Sequence[str]] = None,
+        verbose: bool = False,
+    ):
         super().__init__()
         check_mecab_rc()
         self._verbose = verbose
