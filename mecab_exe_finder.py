@@ -26,6 +26,7 @@ def support_exe_suffix() -> str:
 
 def find_executable_with_distutils(name: str) -> Optional[str]:
     """
+    Tries to find 'executable' using distutils.
     Fedora might not have distutils present. If this is the case, don't crash and return None.
     """
     try:
@@ -36,19 +37,22 @@ def find_executable_with_distutils(name: str) -> Optional[str]:
         return _find(name)
 
 
+def get_bundled_executable(name: str) -> str:
+    """
+    Get path to executable in the bundled "support" folder.
+    Used to provide 'mecab' on computers where it is not installed system-wide or can't be found.
+    """
+    path_to_exe = os.path.join(SUPPORT_DIR, name) + support_exe_suffix()
+    assert os.path.isfile(path_to_exe), f"{path_to_exe} doesn't exist. Can't recover."
+    if not IS_WIN:
+        os.chmod(path_to_exe, 0o755)
+    return path_to_exe
+
+
 @functools.cache
 def find_executable(name: str) -> str:
     """
     If possible, use the executable installed in the system.
     Otherwise, use the executable provided in the support directory.
     """
-
-    if cmd := find_executable_with_distutils(name):
-        return cmd
-    else:
-        # find file in the "support" dir.
-        cmd = os.path.join(SUPPORT_DIR, name) + support_exe_suffix()
-        assert os.path.isfile(cmd), f"{cmd} doesn't exist. Can't recover."
-        if not IS_WIN:
-            os.chmod(cmd, 0o755)
-        return cmd
+    return find_executable_with_distutils(name) or get_bundled_executable(name)
