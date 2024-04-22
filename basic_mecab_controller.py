@@ -4,15 +4,16 @@
 import functools
 import os
 import subprocess
-import sys
-from typing import Optional
 from collections.abc import Sequence
+from typing import Optional
 
-IS_MAC = sys.platform.startswith("darwin")
-IS_WIN = sys.platform.startswith("win32")
-SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
-MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
+try:
+    from .mecab_exe_finder import IS_WIN, find_executable, SUPPORT_DIR
+except ImportError:
+    from mecab_exe_finder import IS_WIN, find_executable, SUPPORT_DIR
+
 INPUT_BUFFER_SIZE = str(819200)
+MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 
 
 @functools.cache
@@ -42,38 +43,6 @@ def find_best_dic_dir():
         if os.path.isdir(directory):
             return directory
     return SUPPORT_DIR
-
-
-@functools.cache
-def support_exe_suffix() -> str:
-    """
-    The mecab executable file in the "support" dir has a different suffix depending on the platform.
-    """
-    if IS_WIN:
-        return ".exe"
-    elif IS_MAC:
-        return ".mac"
-    else:
-        return ".lin"
-
-
-@functools.cache
-def find_executable(name: str) -> str:
-    """
-    If possible, use the executable installed in the system.
-    Otherwise, use the executable provided in the support directory.
-    """
-    from distutils.spawn import find_executable as find
-
-    if cmd := find(name):
-        return cmd
-    else:
-        # find file in the "support" dir.
-        cmd = os.path.join(SUPPORT_DIR, name) + support_exe_suffix()
-        assert os.path.isfile(cmd), f"{cmd} doesn't exist. Can't recover."
-        if not IS_WIN:
-            os.chmod(cmd, 0o755)
-        return cmd
 
 
 def normalize_for_platform(popen: list[str]) -> list[str]:
