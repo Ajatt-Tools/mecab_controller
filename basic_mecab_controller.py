@@ -19,6 +19,7 @@ MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 @functools.cache
 def startup_info():
     if IS_WIN:
+        # Prevents a console window from popping up on Windows
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     else:
