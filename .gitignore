@@ -1,8 +1,11 @@
-.idea
-__pycache__
 /manifest.json
 /meta.json
-/*.ankiaddon
 /build
 /dist
+
+.idea
+.venv
+__pycache__
+
+*.ankiaddon
 *.egg-info
