@@ -3,8 +3,8 @@
 
 import functools
 import os
+import shutil
 import sys
-from typing import Optional
 
 IS_MAC = sys.platform.startswith("darwin")
 IS_WIN = sys.platform.startswith("win32")
@@ -22,19 +22,6 @@ def support_exe_suffix() -> str:
         return ".mac"
     else:
         return ".lin"
-
-
-def find_executable_with_distutils(name: str) -> Optional[str]:
-    """
-    Tries to find 'executable' using distutils.
-    Fedora might not have distutils present. If this is the case, don't crash and return None.
-    """
-    try:
-        from distutils.spawn import find_executable as _find
-    except ImportError:
-        return None
-    else:
-        return _find(name)
 
 
 def get_bundled_executable(name: str) -> str:
@@ -55,4 +42,4 @@ def find_executable(name: str) -> str:
     If possible, use the executable installed in the system.
     Otherwise, use the executable provided in the support directory.
     """
-    return find_executable_with_distutils(name) or get_bundled_executable(name)
+    return shutil.which(name) or get_bundled_executable(name)
