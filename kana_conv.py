@@ -43,6 +43,7 @@ def main():
     )
     assert to_katakana("お前はもう死んでいる。") == "オ前ハモウ死ンデイル。"
     assert to_katakana("いまり") == "イマリ"
+    assert to_katakana(HIRAGANA) == KATAKANA
     assert is_kana_str("ひらがなカタカナ") is True
     assert is_kana_str("ニュース") is True
     assert is_kana_str("故郷は") is False
