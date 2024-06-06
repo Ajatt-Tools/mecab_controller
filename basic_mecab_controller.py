@@ -8,9 +8,9 @@ from collections.abc import Sequence
 from typing import Optional
 
 try:
-    from .mecab_exe_finder import IS_WIN, find_executable, SUPPORT_DIR
+    from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
 except ImportError:
-    from mecab_exe_finder import IS_WIN, find_executable, SUPPORT_DIR
+    from mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
 
 INPUT_BUFFER_SIZE = str(819200)
 MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")

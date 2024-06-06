@@ -5,15 +5,27 @@ import re
 from collections.abc import Iterable
 
 try:
-    from .basic_types import Components, Separators, MecabParsedToken, PartOfSpeech, Inflection
-    from .format import format_output
-    from .kana_conv import to_hiragana, is_kana_str, to_katakana
     from .basic_mecab_controller import BasicMecabController
+    from .basic_types import (
+        Components,
+        Inflection,
+        MecabParsedToken,
+        PartOfSpeech,
+        Separators,
+    )
+    from .format import format_output
+    from .kana_conv import is_kana_str, to_hiragana, to_katakana
 except ImportError:
-    from basic_types import Components, Separators, MecabParsedToken, PartOfSpeech, Inflection
-    from format import format_output
-    from kana_conv import to_hiragana, is_kana_str, to_katakana
     from basic_mecab_controller import BasicMecabController
+    from basic_types import (
+        Components,
+        Inflection,
+        MecabParsedToken,
+        PartOfSpeech,
+        Separators,
+    )
+    from format import format_output
+    from kana_conv import is_kana_str, to_hiragana, to_katakana
 
 
 # Mecab
