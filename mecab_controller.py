@@ -1,8 +1,9 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-
+import functools
 import re
 from collections.abc import Iterable
+from typing import Optional
 
 try:
     from .basic_mecab_controller import BasicMecabController
@@ -43,20 +44,27 @@ def escape_text(text: str) -> str:
 
 
 class MecabController(BasicMecabController):
-    _add_mecab_args = [
+    _mecab_args: list[str] = [
         "--node-format=" + Separators.component.join(component for component in Components) + Separators.node,
         "--unk-format=" + Components.word + Separators.node,
         "--eos-format=" + Separators.footer,
     ]
 
-    def __init__(self, mecab_cmd: list[str] = None, mecab_args: list[str] = None, verbose: bool = False):
+    def __init__(
+        self,
+        mecab_cmd: Optional[list[str]] = None,
+        mecab_args: Optional[list[str]] = None,
+        verbose: bool = False,
+        cache_max_size: int = 1024,
+    ) -> None:
         super().__init__(
             mecab_cmd=mecab_cmd,
-            mecab_args=(mecab_args or self._add_mecab_args),
+            mecab_args=(mecab_args or self._mecab_args),
             verbose=verbose,
         )
+        self.translate = functools.lru_cache(maxsize=cache_max_size)(lambda expr: tuple(self._translate(expr)))
 
-    def translate(self, expr: str) -> Iterable[MecabParsedToken]:
+    def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """Returns a parsed token for each word in expr."""
         expr = escape_text(expr)
         for section in self.run(expr).split(Separators.node):
@@ -76,7 +84,14 @@ class MecabController(BasicMecabController):
                     katakana_reading = None
 
                 if self._verbose:
-                    print(word, katakana_reading, headword, part_of_speech, inflection, sep="\t")
+                    print(
+                        word,
+                        katakana_reading,
+                        headword,
+                        part_of_speech,
+                        inflection,
+                        sep="\t",
+                    )
                 yield MecabParsedToken(
                     word=word,
                     headword=headword,

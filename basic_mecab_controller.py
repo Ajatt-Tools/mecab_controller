@@ -60,24 +60,26 @@ def check_mecab_rc():
 
 
 class BasicMecabController:
-    _mecab_cmd = [
+    _mecab_cmd: list[str] = [
         find_executable("mecab"),
         "--dicdir=" + find_best_dic_dir(),
         "--rcfile=" + MECAB_RC_PATH,
         "--userdic=" + os.path.join(SUPPORT_DIR, "user_dic.dic"),
         "--input-buffer-size=" + INPUT_BUFFER_SIZE,
     ]
+    _mecab_args: list[str] = []
+    _verbose: bool
 
     def __init__(
         self,
-        mecab_cmd: Optional[Sequence[str]] = None,
-        mecab_args: Optional[Sequence[str]] = None,
+        mecab_cmd: Optional[list[str]] = None,
+        mecab_args: Optional[list[str]] = None,
         verbose: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         check_mecab_rc()
         self._verbose = verbose
-        self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or []))
+        self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or self._mecab_args))
         os.environ["DYLD_LIBRARY_PATH"] = SUPPORT_DIR
         os.environ["LD_LIBRARY_PATH"] = SUPPORT_DIR
         if self._verbose:
