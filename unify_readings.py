@@ -7,6 +7,7 @@ except ImportError:
     from kana_conv import to_katakana
 
 EQUIVALENT_SOUNDS = {
+    "このうえ": "[この][うえ]",  # corner case fix.
     "ふうう": "ふーう",
     "いまは": "いまわ",
     "おおう": "おーう",
@@ -81,6 +82,7 @@ EQUIVALENT_SOUNDS = {
     "づ": "ず",
     "を": "お",
     "ゔ": "ぶ",
+    "[この][うえ]": "このうえ",
 }
 EQUIVALENT_SOUNDS |= {to_katakana(key): to_katakana(val) for key, val in EQUIVALENT_SOUNDS.items()}
 
@@ -123,6 +125,7 @@ def main():
     assert unify_repr("おお") == "おー"
     assert unify_repr("よじょうはん") == "よじょーはん"
     assert unify_repr("たましい") == "たましー"
+    assert unify_repr("コノウエ") == "コノウエ"
     assert literal_pronunciation("がっこう") == "ガッコー"
     print("Ok.")
 
