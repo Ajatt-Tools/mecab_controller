@@ -59,6 +59,9 @@ class PartOfSpeech(enum.Enum):
         return cls.unknown
 
 
+ANY_ATTACHING = "接続"
+
+
 class Inflection(enum.Enum):
     unknown = None
     garu_attached = "ガル接続"  # e.g 苦し (+ がる)
