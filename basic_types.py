@@ -90,7 +90,7 @@ class Inflection(enum.Enum):
     continuative_te = "連用テ接続"  # (見え+)なく, (問題+)なく, 美味しく, 熱く
     continuative_de = "連用デ接続"  # (寝+)ない(+で), (変え+)ない(+で), (忘れ+)ない(+で)
     continuative_ni = "連用ニ接続"  # (消さ+)ず(+に)
-    continuative = "連用形"  # 見つかり, 教わり, いただき, 探し
+    continuative = "連用形"  # 見つかり, 教わり, いただき, 探し(+た), (弄ば+)れ(+て)
 
     @classmethod
     def _missing_(cls, value):
