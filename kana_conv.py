@@ -27,10 +27,14 @@ def to_katakana(kana: str) -> str:
 
 
 def is_kana_char(char: str) -> bool:
+    if len(char) != 1:
+        raise ValueError("string must contain one character")
     return char in HIRAGANA or char in KATAKANA or char == "ー"
 
 
 def is_kana_str(word: str) -> bool:
+    if not word:
+        raise ValueError("string can't be empty")
     return all(map(is_kana_char, word))
 
 
