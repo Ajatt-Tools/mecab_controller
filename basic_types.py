@@ -62,6 +62,7 @@ class PartOfSpeech(enum.Enum):
 ANY_ATTACHING = "接続"
 
 
+@enum.unique
 class Inflection(enum.Enum):
     unknown = None
     garu_attached = "ガル接続"  # e.g 苦し (+ がる)
