@@ -1,5 +1,6 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+import dataclasses
 import functools
 import re
 from collections.abc import Iterable
@@ -16,6 +17,7 @@ try:
     )
     from .format import format_output
     from .kana_conv import is_kana_str, to_hiragana, to_katakana
+    from .replace_mistakes import replace_mistakes
 except ImportError:
     from basic_mecab_controller import BasicMecabController
     from basic_types import (
@@ -27,6 +29,7 @@ except ImportError:
     )
     from format import format_output
     from kana_conv import is_kana_str, to_hiragana, to_katakana
+    from replace_mistakes import replace_mistakes
 
 
 # Mecab
@@ -83,22 +86,17 @@ class MecabController(BasicMecabController):
                 if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
                     katakana_reading = None
 
-                if self._verbose:
-                    print(
-                        word,
-                        katakana_reading,
-                        headword,
-                        part_of_speech,
-                        inflection,
-                        sep="\t",
-                    )
-                yield MecabParsedToken(
+                token = MecabParsedToken(
                     word=word,
                     headword=headword,
                     katakana_reading=(katakana_reading or None),
                     part_of_speech=PartOfSpeech(part_of_speech or None),
                     inflection_type=Inflection(inflection or None),
                 )
+                for token in replace_mistakes(token):
+                    if self._verbose:
+                        print(*dataclasses.astuple(token), sep="\t")
+                    yield token
 
     def reading(self, expr: str) -> str:
         """Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
