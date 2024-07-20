@@ -127,6 +127,7 @@ def main():
     assert unify_repr("たましい") == "たましー"
     assert unify_repr("コノウエ") == "コノウエ"
     assert literal_pronunciation("がっこう") == "ガッコー"
+    assert literal_pronunciation("イマハ") == "イマワ"
     print("Ok.")
 
 

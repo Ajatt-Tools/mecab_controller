@@ -3,10 +3,31 @@
 
 try:
     from .compound_furigana import break_compound_furigana
-    from .kana_conv import to_katakana as _
+    from .kana_conv import to_katakana
 except ImportError:
     from compound_furigana import break_compound_furigana
-    from kana_conv import to_katakana as _
+    from kana_conv import to_katakana
+
+
+def mk_eq_trans_table():
+    treat_equal = {
+        "ハ": "ワ",
+        "ヂ": "ジ",
+        "ヅ": "ズ",
+        "ヲ": "オ",
+        "ヴ": "ブ",
+    }
+    return str.maketrans("".join(treat_equal.keys()), "".join(treat_equal.values()))
+
+
+TREAT_EQUAL = mk_eq_trans_table()
+
+
+def to_eq(text: str) -> str:
+    """
+    Used to compare strings when formatting furigana.
+    """
+    return to_katakana(text).translate(TREAT_EQUAL)
 
 
 def format_output(kanji: str, reading: str) -> str:
@@ -16,11 +37,11 @@ def format_output(kanji: str, reading: str) -> str:
     place_l = 0
     place_r = 0
     for i in range(1, len(kanji)):
-        if _(kanji[-i]) != _(reading[-i]):
+        if to_eq(kanji[-i]) != to_eq(reading[-i]):
             break
         place_r = i
     for i in range(0, len(kanji) - 1):
-        if _(kanji[i]) != _(reading[i]):
+        if to_eq(kanji[i]) != to_eq(reading[i]):
             break
         place_l = i + 1
     if place_l == 0:
@@ -48,4 +69,5 @@ if __name__ == "__main__":
     assert format_output("突っ込んだ", "つっこんだ") == " 突[つ]っ 込[こ]んだ"
     assert format_output("相合い傘", "あいあいがさ") == " 相合[あいあ]い 傘[がさ]"
     assert format_output("あいあい傘", "あいあいがさ") == "あいあい 傘[がさ]"
+    assert format_output("今は", "いまわ") == " 今[いま]は"
     print("Done.")
