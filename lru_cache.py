@@ -8,6 +8,9 @@ T = TypeVar("T")
 
 
 class LRUCache(Generic[T]):
+    """
+    This class is used to cache results of calls to mecab.translate() instead of functools.lru_cache().
+    """
     _cache: OrderedDict[Hashable, T]
     _capacity: int
 
