@@ -53,7 +53,7 @@ class MecabController(BasicMecabController):
         "--unk-format=" + Components.word + Separators.node,
         "--eos-format=" + Separators.footer,
     ]
-    _cache: LRUCache[Sequence[MecabParsedToken]] = LRUCache()
+    _cache: LRUCache[str, Sequence[MecabParsedToken]] = LRUCache()
 
     def __init__(
         self,

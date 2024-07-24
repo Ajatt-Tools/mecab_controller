@@ -5,27 +5,28 @@ from collections import OrderedDict
 from collections.abc import Hashable
 from typing import Generic, TypeVar
 
-T = TypeVar("T")
+K = TypeVar("K", bound=Hashable)
+V = TypeVar("V")
 
 
-class LRUCache(Generic[T]):
+class LRUCache(Generic[K, V]):
     """
     This class is used to cache results of calls to mecab.translate() instead of functools.lru_cache().
     """
 
-    _cache: OrderedDict[Hashable, T]
+    _cache: OrderedDict[K, V]
     _capacity: int
 
     def __init__(self, capacity: int = 0) -> None:
         self._capacity = capacity
         self._cache = OrderedDict()
 
-    def __getitem__(self, key: Hashable) -> T:
+    def __getitem__(self, key: K) -> V:
         value = self._cache[key]
         self._cache.move_to_end(key)
         return value
 
-    def __setitem__(self, key: Hashable, value: T) -> None:
+    def __setitem__(self, key: K, value: V) -> None:
         self._cache[key] = value
         self._cache.move_to_end(key)
         self._clear_old_items()
@@ -39,7 +40,7 @@ class LRUCache(Generic[T]):
             while len(self._cache) > self._capacity:
                 self._cache.popitem(last=False)
 
-    def setdefault(self, key: Hashable, value: T) -> T:
+    def setdefault(self, key: K, value: V) -> V:
         value = self._cache.setdefault(key, value)
         self._cache.move_to_end(key)
         return value
