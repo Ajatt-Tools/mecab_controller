@@ -2,7 +2,8 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 from collections import OrderedDict
-from typing import TypeVar, Generic, Hashable
+from collections.abc import Hashable
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -11,6 +12,7 @@ class LRUCache(Generic[T]):
     """
     This class is used to cache results of calls to mecab.translate() instead of functools.lru_cache().
     """
+
     _cache: OrderedDict[Hashable, T]
     _capacity: int
 

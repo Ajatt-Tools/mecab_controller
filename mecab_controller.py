@@ -1,9 +1,8 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
-import functools
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import Optional
 
 try:
@@ -17,6 +16,7 @@ try:
     )
     from .format import format_output
     from .kana_conv import is_kana_str, to_hiragana, to_katakana
+    from .lru_cache import LRUCache
     from .replace_mistakes import replace_mistakes
 except ImportError:
     from basic_mecab_controller import BasicMecabController
@@ -29,6 +29,7 @@ except ImportError:
     )
     from format import format_output
     from kana_conv import is_kana_str, to_hiragana, to_katakana
+    from lru_cache import LRUCache
     from replace_mistakes import replace_mistakes
 
 
@@ -52,6 +53,7 @@ class MecabController(BasicMecabController):
         "--unk-format=" + Components.word + Separators.node,
         "--eos-format=" + Separators.footer,
     ]
+    _cache: LRUCache[Sequence[MecabParsedToken]] = LRUCache()
 
     def __init__(
         self,
@@ -65,7 +67,13 @@ class MecabController(BasicMecabController):
             mecab_args=(mecab_args or self._mecab_args),
             verbose=verbose,
         )
-        self.translate = functools.lru_cache(maxsize=cache_max_size)(lambda expr: tuple(self._translate(expr)))
+        self._cache.set_capacity(cache_max_size)
+
+    def translate(self, expr: str) -> Sequence[MecabParsedToken]:
+        try:
+            return self._cache[expr]
+        except KeyError:
+            return self._cache.setdefault(expr, tuple(self._translate(expr)))
 
     def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """Returns a parsed token for each word in expr."""
