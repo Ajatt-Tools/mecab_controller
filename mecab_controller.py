@@ -47,12 +47,14 @@ def escape_text(text: str) -> str:
     return text.strip()
 
 
-class MecabController(BasicMecabController):
+class MecabController:
     _mecab_args: list[str] = [
         "--node-format=" + Separators.component.join(component for component in Components) + Separators.node,
         "--unk-format=" + Components.word + Separators.node,
         "--eos-format=" + Separators.footer,
     ]
+    _mecab: BasicMecabController
+    _verbose: bool
     _cache: LRUCache[str, Sequence[MecabParsedToken]] = LRUCache()
 
     def __init__(
@@ -62,12 +64,13 @@ class MecabController(BasicMecabController):
         verbose: bool = False,
         cache_max_size: int = 1024,
     ) -> None:
-        super().__init__(
+        self._mecab = BasicMecabController(
             mecab_cmd=mecab_cmd,
             mecab_args=(mecab_args or self._mecab_args),
             verbose=verbose,
         )
         self._cache.set_capacity(cache_max_size)
+        self._verbose = verbose
 
     def translate(self, expr: str) -> Sequence[MecabParsedToken]:
         try:
@@ -78,7 +81,7 @@ class MecabController(BasicMecabController):
     def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """Returns a parsed token for each word in expr."""
         expr = escape_text(expr)
-        for section in self.run(expr).split(Separators.node):
+        for section in self._mecab.run(expr).split(Separators.node):
             if section == Separators.footer:
                 break
             # ignore empty sections (can be at the end of a node)
