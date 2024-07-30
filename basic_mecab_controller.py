@@ -59,6 +59,14 @@ def check_mecab_rc():
             f.write("")
 
 
+def expr_to_bytes(expr: str) -> bytes:
+    return expr.encode("utf-8", "ignore") + b"\n"
+
+
+def mecab_output_to_str(outs: bytes) -> str:
+    return outs.rstrip(b"\r\n").decode("utf-8", "replace")
+
+
 class BasicMecabController:
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
@@ -86,7 +94,6 @@ class BasicMecabController:
             print("mecab cmd:", self._mecab_cmd)
 
     def run(self, expr: str) -> str:
-        expr = expr.encode("utf-8", "ignore") + b"\n"
         try:
             proc = subprocess.Popen(
                 self._mecab_cmd,
@@ -100,12 +107,12 @@ class BasicMecabController:
             raise Exception("Please ensure your Linux system has 64 bit binary support.")
 
         try:
-            outs, errs = proc.communicate(expr, timeout=5)
+            outs, errs = proc.communicate(expr_to_bytes(expr), timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
             outs, errs = proc.communicate()
 
-        return outs.rstrip(b"\r\n").decode("utf-8", "replace")
+        return mecab_output_to_str(outs)
 
 
 def main():
