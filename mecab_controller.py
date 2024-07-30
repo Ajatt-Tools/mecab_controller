@@ -79,7 +79,14 @@ class MecabController:
             return self._cache.setdefault(expr, tuple(self._translate(expr)))
 
     def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
-        """Returns a parsed token for each word in expr."""
+        """Analyzes expr with mecab. Fixes mecab's mistakes. Returns a parsed token for each word in expr."""
+        for token in replace_mistakes(tuple(self._analyze(expr))):
+            if self._verbose:
+                print(*dataclasses.astuple(token), sep="\t")
+            yield token
+
+    def _analyze(self, expr: str) -> Iterable[MecabParsedToken]:
+        """Analyzes expr with mecab. Returns a parsed token for each word in expr."""
         for section in self._mecab.run(escape_text(expr)).split(Separators.node):
             if not section:
                 # ignore empty sections (can be at the end of a node)
@@ -97,17 +104,13 @@ class MecabController:
             if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
                 katakana_reading = None
 
-            token = MecabParsedToken(
+            yield MecabParsedToken(
                 word=word,
                 headword=headword,
                 katakana_reading=(katakana_reading or None),
                 part_of_speech=PartOfSpeech(part_of_speech or None),
                 inflection_type=Inflection(inflection or None),
             )
-            for token in replace_mistakes(token):
-                if self._verbose:
-                    print(*dataclasses.astuple(token), sep="\t")
-                yield token
 
     def reading(self, expr: str) -> str:
         """Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
@@ -138,6 +141,7 @@ def main():
         "向けていた目",
         "軽そうに見える",
         "相合い傘",
+        "放っておけ",
     )
     for idx, expr in enumerate(try_expressions):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")

@@ -1,7 +1,8 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
+from typing import Optional
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
@@ -9,8 +10,23 @@ except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
 
 
-def replace_mistakes(token: MecabParsedToken) -> Iterable[MecabParsedToken]:
-    if token.word == "悪い" and token.katakana_reading == "アクイ" and token.headword == "悪意":
+def replace_mistakes(tokens: Sequence[MecabParsedToken]) -> Iterable[MecabParsedToken]:
+    for idx in range(len(tokens)):
+        yield from replace_mistake(tokens, idx)
+
+
+def slice_headwords(context: Sequence[MecabParsedToken], start: int, end: int) -> Optional[tuple[str, ...]]:
+    try:
+        return tuple(context[idx].headword for idx in range(start, end))
+    except IndexError:
+        return None
+
+
+def replace_mistake(context: Sequence[MecabParsedToken], pos: int) -> Iterable[MecabParsedToken]:
+    token = context[pos]
+    if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) == ("て", "おく"):
+        yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
+    elif token.word == "悪い" and token.katakana_reading == "アクイ" and token.headword == "悪意":
         yield dataclasses.replace(token, headword="悪い", katakana_reading="ワルイ")
     elif token.word == "いた目" and token.katakana_reading == "イタメ" and token.headword == "板目":
         yield MecabParsedToken(
