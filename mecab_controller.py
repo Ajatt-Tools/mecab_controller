@@ -80,34 +80,34 @@ class MecabController:
 
     def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """Returns a parsed token for each word in expr."""
-        expr = escape_text(expr)
-        for section in self._mecab.run(expr).split(Separators.node):
+        for section in self._mecab.run(escape_text(expr)).split(Separators.node):
+            if not section:
+                # ignore empty sections (can be at the end of a node)
+                continue
             if section == Separators.footer:
                 break
-            # ignore empty sections (can be at the end of a node)
-            if section:
-                components = section.split(Separators.component)
-                try:
-                    word, headword, katakana_reading, part_of_speech, inflection = components
-                except ValueError:
-                    # unknown to mecab, gave the same word back
-                    word, headword, katakana_reading = components * 3
-                    part_of_speech, inflection = None, None
+            components = section.split(Separators.component)
+            try:
+                word, headword, katakana_reading, part_of_speech, inflection = components
+            except ValueError:
+                # unknown to mecab, gave the same word back
+                word, headword, katakana_reading = components * 3
+                part_of_speech, inflection = None, None
 
-                if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
-                    katakana_reading = None
+            if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
+                katakana_reading = None
 
-                token = MecabParsedToken(
-                    word=word,
-                    headword=headword,
-                    katakana_reading=(katakana_reading or None),
-                    part_of_speech=PartOfSpeech(part_of_speech or None),
-                    inflection_type=Inflection(inflection or None),
-                )
-                for token in replace_mistakes(token):
-                    if self._verbose:
-                        print(*dataclasses.astuple(token), sep="\t")
-                    yield token
+            token = MecabParsedToken(
+                word=word,
+                headword=headword,
+                katakana_reading=(katakana_reading or None),
+                part_of_speech=PartOfSpeech(part_of_speech or None),
+                inflection_type=Inflection(inflection or None),
+            )
+            for token in replace_mistakes(token):
+                if self._verbose:
+                    print(*dataclasses.astuple(token), sep="\t")
+                yield token
 
     def reading(self, expr: str) -> str:
         """Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
