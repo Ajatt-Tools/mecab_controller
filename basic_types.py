@@ -3,25 +3,27 @@
 
 import dataclasses
 import enum
-from collections.abc import Iterable
-from types import SimpleNamespace
+import typing
 from typing import Optional
 
 
-class IterableSimpleNamespace(Iterable, SimpleNamespace):
-    def __iter__(self):
-        return iter(self.__dict__.values())
-
-
-Separators = SimpleNamespace(
+class Separators:
     # Separators that are passed as command line arguments to mecab and used to parse mecab's output.
-    component="<ajt__component_separator>",
-    node="<ajt__node_separator>",
-    footer="<ajt__footer>",
-)
+    component = "<ajt__component_separator>"
+    node = "<ajt__node_separator>"
+    footer = "<ajt__footer>"
 
-Components = IterableSimpleNamespace(
+
+class MecabAnalysis(typing.NamedTuple):
     # What info about each word mecab should output to the user.
+    word: str
+    headword: str
+    katakana_reading: str
+    part_of_speech: str
+    inflection_type: str
+
+
+COMPONENTS: typing.Final[MecabAnalysis] = MecabAnalysis(
     word="%m",
     headword="%f[6]",
     katakana_reading="%f[7]",
@@ -111,11 +113,11 @@ class MecabParsedToken:
     inflection_type: Inflection
 
 
-assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(Components.__dict__.keys())
+assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(COMPONENTS.__annotations__)
 
 
 def main():
-    for k in Components:
+    for k in COMPONENTS:
         print(k)
     print(PartOfSpeech("invalid"))
     print(PartOfSpeech("副詞"))

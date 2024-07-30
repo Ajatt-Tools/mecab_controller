@@ -8,7 +8,7 @@ from typing import Optional
 try:
     from .basic_mecab_controller import BasicMecabController
     from .basic_types import (
-        Components,
+        COMPONENTS,
         Inflection,
         MecabParsedToken,
         PartOfSpeech,
@@ -21,7 +21,7 @@ try:
 except ImportError:
     from basic_mecab_controller import BasicMecabController
     from basic_types import (
-        Components,
+        COMPONENTS,
         Inflection,
         MecabParsedToken,
         PartOfSpeech,
@@ -49,8 +49,8 @@ def escape_text(text: str) -> str:
 
 class MecabController:
     _mecab_args: list[str] = [
-        "--node-format=" + Separators.component.join(component for component in Components) + Separators.node,
-        "--unk-format=" + Components.word + Separators.node,
+        "--node-format=" + Separators.component.join(component for component in COMPONENTS) + Separators.node,
+        "--unk-format=" + COMPONENTS.word + Separators.node,
         "--eos-format=" + Separators.footer,
     ]
     _mecab: BasicMecabController
