@@ -26,10 +26,34 @@ def to_katakana(kana: str) -> str:
     return kana.translate(HIRAGANA_TO_KATAKANA)
 
 
+def is_hiragana_char(char: str) -> bool:
+    if len(char) != 1:
+        raise ValueError("string must contain one character")
+    return char in HIRAGANA or char == "ー"
+
+
+def is_katakana_char(char: str) -> bool:
+    if len(char) != 1:
+        raise ValueError("string must contain one character")
+    return char in KATAKANA or char == "ー"
+
+
 def is_kana_char(char: str) -> bool:
     if len(char) != 1:
         raise ValueError("string must contain one character")
     return char in HIRAGANA or char in KATAKANA or char == "ー"
+
+
+def is_hiragana_str(word: str) -> bool:
+    if not word:
+        raise ValueError("string can't be empty")
+    return all(map(is_hiragana_char, word))
+
+
+def is_katakana_str(word: str) -> bool:
+    if not word:
+        raise ValueError("string can't be empty")
+    return all(map(is_katakana_char, word))
 
 
 def is_kana_str(word: str) -> bool:
