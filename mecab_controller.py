@@ -1,6 +1,7 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
+import io
 import re
 from collections.abc import Iterable, Sequence
 from typing import Optional
@@ -114,12 +115,13 @@ class MecabController:
 
     def reading(self, expr: str) -> str:
         """Formats furigana using Anki syntax, e.g. 野獣[やじゅう]の 様[よう]な 男[おとこ]."""
-        substrings = []
+        buf = io.StringIO()
         for out in self.translate(expr):
-            substrings.append(
-                format_output(out.word, to_hiragana(out.katakana_reading)) if out.katakana_reading else out.word
-            )
-        return "".join(substrings).strip()
+            if out.katakana_reading and to_katakana(out.katakana_reading) != to_katakana(out.word):
+                buf.write(format_output(out.word, to_hiragana(out.katakana_reading)))
+            else:
+                buf.write(out.word)
+        return buf.getvalue()
 
 
 def main():
