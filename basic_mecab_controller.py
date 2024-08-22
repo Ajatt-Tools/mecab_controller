@@ -112,7 +112,10 @@ class BasicMecabController:
             proc.kill()
             outs, errs = proc.communicate()
 
-        return mecab_output_to_str(outs)
+        str_out = mecab_output_to_str(outs)
+        if "tagger.cpp" in str_out and "no such file or directory" in str_out:
+            raise RuntimeError("Please ensure your Windows user name contains only English characters.")
+        return str_out
 
 
 def main():
