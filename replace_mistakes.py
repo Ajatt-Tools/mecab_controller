@@ -31,10 +31,17 @@ def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Op
         return None
 
 
+def take_headword(context: Sequence[WrappedToken], pos: int) -> Optional[str]:
+    try:
+        return context[pos].token.headword
+    except IndexError:
+        return None
+
+
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
-    elif token.word == "いい気" and slice_headwords(context, pos + 1, pos + 2) == ("分", ):
+    elif token.word == "いい気" and take_headword(context, pos + 1) == "分":
         context[pos+1].skip = True
         yield MecabParsedToken(
             word="いい",
