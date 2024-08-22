@@ -145,6 +145,8 @@ def main():
         "放っておいて",
         "有り難う",
         "プールから出て",
+        "一人暮らし",
+        "今日は",
     )
     for idx, expr in enumerate(try_expressions):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")
