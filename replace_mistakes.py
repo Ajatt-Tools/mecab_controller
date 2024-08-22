@@ -10,22 +10,46 @@ except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
 
 
-def replace_mistakes(tokens: Sequence[MecabParsedToken]) -> Iterable[MecabParsedToken]:
-    for idx in range(len(tokens)):
-        yield from replace_mistake(tokens, idx)
+@dataclasses.dataclass
+class WrappedToken:
+    token: MecabParsedToken
+    skip: bool = False
 
 
-def slice_headwords(context: Sequence[MecabParsedToken], start: int, end: int) -> Optional[tuple[str, ...]]:
+def replace_mistakes(tokens: Iterable[MecabParsedToken]) -> Iterable[MecabParsedToken]:
+    consumed = tuple(WrappedToken(token) for token in tokens)
+    for idx, wrapped in enumerate(consumed):
+        if wrapped.skip:
+            continue
+        yield from replace_mistake(wrapped.token, consumed, idx)
+
+
+def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Optional[tuple[str, ...]]:
     try:
-        return tuple(context[idx].headword for idx in range(start, end))
+        return tuple(context[idx].token.headword for idx in range(start, end))
     except IndexError:
         return None
 
 
-def replace_mistake(context: Sequence[MecabParsedToken], pos: int) -> Iterable[MecabParsedToken]:
-    token = context[pos]
+def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
+    elif token.word == "いい気" and slice_headwords(context, pos + 1, pos + 2) == ("分", ):
+        context[pos+1].skip = True
+        yield MecabParsedToken(
+            word="いい",
+            headword="いい",
+            katakana_reading="イイ",
+            part_of_speech=PartOfSpeech.i_adjective,
+            inflection_type=Inflection.dictionary_form,
+        )
+        yield MecabParsedToken(
+            word="気分",
+            headword="気分",
+            katakana_reading="キブン",
+            part_of_speech=PartOfSpeech.noun,
+            inflection_type=Inflection.dictionary_form,
+        )
     elif token.word == "しや" and token.headword == "視野":
         yield dataclasses.replace(
             token,

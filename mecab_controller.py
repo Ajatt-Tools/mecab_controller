@@ -81,7 +81,7 @@ class MecabController:
 
     def _translate(self, expr: str) -> Iterable[MecabParsedToken]:
         """Analyzes expr with mecab. Fixes mecab's mistakes. Returns a parsed token for each word in expr."""
-        for token in replace_mistakes(tuple(self._analyze(expr))):
+        for token in replace_mistakes(self._analyze(expr)):
             if self._verbose:
                 print(*dataclasses.astuple(token), sep="\t")
             yield token
@@ -149,6 +149,7 @@ def main():
         "プールから出て",
         "一人暮らし",
         "今日は",
+        "いい気分に当たって",
     )
     for idx, expr in enumerate(try_expressions):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")
