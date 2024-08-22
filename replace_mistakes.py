@@ -42,7 +42,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
     elif token.word == "いい気" and take_headword(context, pos + 1) == "分":
-        context[pos+1].skip = True
+        context[pos + 1].skip = True
         yield MecabParsedToken(
             word="いい",
             headword="いい",
