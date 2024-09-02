@@ -41,6 +41,35 @@ def take_headword(context: Sequence[WrappedToken], pos: int) -> Optional[str]:
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
+    elif token.word == "阿良" and slice_headwords(context, pos + 1, pos + 3) == ("々", "木"):
+        context[pos + 1].skip = True
+        context[pos + 2].skip = True
+        yield MecabParsedToken(
+            word="阿良々木",
+            headword="阿良々木",
+            katakana_reading="アララギ",
+            part_of_speech=PartOfSpeech.noun,
+            inflection_type=Inflection.dictionary_form,
+        )
+    elif token.word == "乗り" and slice_headwords(context, pos + 1, pos + 3) == ("込", "え"):
+        context[pos + 1].skip = True
+        context[pos + 2].skip = True
+        yield MecabParsedToken(
+            word="乗り込え",
+            headword="乗り込える",
+            katakana_reading="ノリコエ",
+            part_of_speech=PartOfSpeech.verb,
+            inflection_type=Inflection.continuative,
+        )
+    elif token.word == "助" and token.katakana_reading == "スケ" and slice_headwords(context, pos+1, pos+3) == ("から", "ない"):
+        context[pos + 1].skip = True
+        yield MecabParsedToken(
+            word="助から",
+            headword="助かる",
+            katakana_reading="タスカラ",
+            part_of_speech=PartOfSpeech.verb,
+            inflection_type=Inflection.irrealis,
+        )
     elif token.word == "いい気" and take_headword(context, pos + 1) == "分":
         context[pos + 1].skip = True
         yield MecabParsedToken(
