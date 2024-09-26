@@ -44,7 +44,7 @@ class PartOfSpeech(enum.Enum):
     bound_auxiliary = "助動詞"  # e.g らしい, です, ない, ます, たい, だ
     particle = "助詞"  # e.g. は, から, を, て
     verb = "動詞"  # e.g. 出る, 見せる, あげる, 雇う, 患う
-    noun = "名詞"  # e.g. 全員, 国, 言語学, 代金. Note: non-i adjectives (e.g. 綺麗) are classified as nouns too.
+    noun = "名詞"  # e.g. 全員, 国, 言語学, 代金. Note: non-i adjectives (e.g. 綺麗, 静か) are classified as nouns too.
     i_adjective = "形容詞"  # e.g. 広い, づらい, 近い, 深い, 怖い
     interjection = "感動詞"  # e.g. おはよう, ありがとう, お疲れ様
     conjunction = "接続詞"  # e.g. それなら, それより, ですけれど, ただし
