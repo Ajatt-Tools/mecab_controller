@@ -76,7 +76,11 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             part_of_speech=PartOfSpeech.verb,
             inflection_type=Inflection.continuative,
         )
-    elif token.word == "助" and token.katakana_reading == "スケ" and slice_headwords(context, pos+1, pos+3) == ("から", "ない"):
+    elif (
+        token.word == "助"
+        and token.katakana_reading == "スケ"
+        and slice_headwords(context, pos + 1, pos + 3) == ("から", "ない")
+    ):
         context[pos + 1].skip = True
         yield MecabParsedToken(
             word="助から",
