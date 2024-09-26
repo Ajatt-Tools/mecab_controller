@@ -41,6 +41,11 @@ def take_headword(context: Sequence[WrappedToken], pos: int) -> Optional[str]:
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
+    elif token.word == "旅立て" and token.headword == "旅立てる":
+        yield dataclasses.replace(
+            token,
+            headword="旅立つ",
+        )
     elif token.word == "羽" and take_headword(context, pos + 1) == "撃":
         context[pos + 1].skip = True
         yield MecabParsedToken(
