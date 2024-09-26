@@ -42,6 +42,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
     if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
     elif token.word == "旅立て" and token.headword == "旅立てる":
+        # 旅立てる isn't listed in the pitch accent database; replace it with 旅立つ
         yield dataclasses.replace(
             token,
             headword="旅立つ",
