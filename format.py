@@ -3,62 +3,57 @@
 
 try:
     from .compound_furigana import break_compound_furigana
-    from .kana_conv import to_katakana
+    from .kana_conv import is_kana_char
 except ImportError:
     from compound_furigana import break_compound_furigana
-    from kana_conv import to_katakana
+    from kana_conv import is_kana_char
 
 
-def mk_eq_trans_table():
-    treat_equal = {
-        "ハ": "ワ",
-        "ヂ": "ジ",
-        "ヅ": "ズ",
-        "ヲ": "オ",
-        "ヴ": "ブ",
-    }
-    return str.maketrans("".join(treat_equal.keys()), "".join(treat_equal.values()))
-
-
-TREAT_EQUAL = mk_eq_trans_table()
-
-
-def to_eq(text: str) -> str:
+def find_kanji_boundaries(word: str) -> tuple[int, int]:
     """
-    Used to compare strings when formatting furigana.
+    Return the number of kana characters before the first kanji
+    and the number of kana characters after the last kanji.
     """
-    return to_katakana(text).translate(TREAT_EQUAL)
+    len_kana_before = 0
+    len_kana_after = 0
+    for idx, char in enumerate(word):
+        if not is_kana_char(char):
+            break
+        len_kana_before += 1
+    for idx, char in enumerate(reversed(word)):
+        if not is_kana_char(char):
+            break
+        len_kana_after += 1
+    return len_kana_before, len_kana_after
 
 
 def format_output(kanji: str, reading: str) -> str:
     """Convert (kanji, reading) input to output that Anki understands: kanji[reading]"""
     # strip matching characters and beginning and end of reading and kanji
     # reading should always be at least as long as the kanji
-    place_l = 0
-    place_r = 0
-    for i in range(1, len(kanji)):
-        if to_eq(kanji[-i]) != to_eq(reading[-i]):
-            break
-        place_r = i
-    for i in range(0, len(kanji) - 1):
-        if to_eq(kanji[i]) != to_eq(reading[i]):
-            break
-        place_l = i + 1
-    if place_l == 0:
-        if place_r == 0:
+    n_before, n_after = find_kanji_boundaries(kanji)
+    if n_before == 0:
+        if n_after == 0:
             out_expr = f" {kanji}[{reading}]"
         else:
-            out_expr = f" {kanji[:-place_r]}[{reading[:-place_r]}]{kanji[-place_r:]}"
+            out_expr = f" {kanji[:-n_after]}[{reading[:-n_after]}]{kanji[-n_after:]}"
     else:
-        if place_r == 0:
-            out_expr = f"{kanji[:place_l]} {kanji[place_l:]}[{reading[place_l:]}]"
+        if n_after == 0:
+            out_expr = f"{kanji[:n_before]} {kanji[n_before:]}[{reading[n_before:]}]"
         else:
-            out_expr = f"{kanji[:place_l]} {kanji[place_l:-place_r]}[{reading[place_l:-place_r]}]{kanji[-place_r:]}"
+            out_expr = f"{kanji[:n_before]} {kanji[n_before:-n_after]}[{reading[n_before:-n_after]}]{kanji[-n_after:]}"
 
     return break_compound_furigana(out_expr)
 
 
 if __name__ == "__main__":
+    assert find_kanji_boundaries("秘訣") == (0, 0)
+    assert find_kanji_boundaries("食べた") == (0, 2)
+    assert find_kanji_boundaries("サイン会") == (3, 0)
+    assert find_kanji_boundaries("取って置き") == (0, 1)
+    assert find_kanji_boundaries("ほほ笑む") == (2, 1)
+    assert find_kanji_boundaries("相合い傘") == (0, 0)
+    print("1 Done.")
     assert format_output("秘訣", "ひけつ") == " 秘訣[ひけつ]"
     assert format_output("食べた", "たべた") == " 食[た]べた"
     assert format_output("高級レストラン", "こうきゅうれすとらん") == " 高級[こうきゅう]レストラン"
@@ -70,4 +65,6 @@ if __name__ == "__main__":
     assert format_output("相合い傘", "あいあいがさ") == " 相合[あいあ]い 傘[がさ]"
     assert format_output("あいあい傘", "あいあいがさ") == "あいあい 傘[がさ]"
     assert format_output("今は", "いまわ") == " 今[いま]は"
-    print("Done.")
+    assert format_output("ほほ笑む", "ほおえむ") == "ほほ 笑[え]む"
+    assert format_output("ほほ笑む", "ほほえむ") == "ほほ 笑[え]む"
+    print("2 Done.")
