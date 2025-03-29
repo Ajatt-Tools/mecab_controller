@@ -4,7 +4,6 @@
 import functools
 import os
 import subprocess
-from collections.abc import Sequence
 from typing import Optional
 
 try:
@@ -67,6 +66,14 @@ def mecab_output_to_str(outs: bytes) -> str:
     return outs.rstrip(b"\r\n").decode("utf-8", "replace")
 
 
+def prepend_library_path() -> None:
+    for library_path in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"):
+        try:
+            os.environ[library_path] = f"{SUPPORT_DIR}:{os.environ[library_path]}"
+        except KeyError:
+            os.environ[library_path] = SUPPORT_DIR
+
+
 class BasicMecabController:
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
@@ -88,10 +95,7 @@ class BasicMecabController:
         check_mecab_rc()
         self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or self._mecab_args))
-        current_dyld_library_path = os.environ.get("DYLD_LIBRARY_PATH", "")
-        current_ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
-        os.environ["DYLD_LIBRARY_PATH"] = f"{SUPPORT_DIR}:{current_dyld_library_path}" if current_dyld_library_path else SUPPORT_DIR
-        os.environ["LD_LIBRARY_PATH"] = f"{SUPPORT_DIR}:{current_ld_library_path}" if current_ld_library_path else SUPPORT_DIR
+        prepend_library_path()
         if self._verbose:
             print("mecab cmd:", self._mecab_cmd)
 
