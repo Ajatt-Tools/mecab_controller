@@ -88,8 +88,10 @@ class BasicMecabController:
         check_mecab_rc()
         self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or self._mecab_args))
-        os.environ["DYLD_LIBRARY_PATH"] = SUPPORT_DIR
-        os.environ["LD_LIBRARY_PATH"] = SUPPORT_DIR
+        current_dyld_library_path = os.environ.get("DYLD_LIBRARY_PATH", "")
+        current_ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
+        os.environ["DYLD_LIBRARY_PATH"] = f"{SUPPORT_DIR}:{current_dyld_library_path}" if current_dyld_library_path else SUPPORT_DIR
+        os.environ["LD_LIBRARY_PATH"] = f"{SUPPORT_DIR}:{current_ld_library_path}" if current_ld_library_path else SUPPORT_DIR
         if self._verbose:
             print("mecab cmd:", self._mecab_cmd)
 
