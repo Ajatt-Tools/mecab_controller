@@ -156,6 +156,7 @@ def main():
         "歩いた",
         "荒んだ",
         "温玉",
+        "他人のアソコ弄ってる",
     )
     for idx, expr in enumerate(try_expressions):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")
