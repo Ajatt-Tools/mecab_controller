@@ -46,6 +46,11 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             token,
             headword="温玉",
         )
+    elif token.word == "拗ら" and token.headword == "拗る" and take_headword(context, pos + 1).startswith("せ"):
+        yield dataclasses.replace(
+            token,
+            headword="拗らせる",
+        )
     elif token.word == "弄っ" and token.headword == "弄う" and "てる" == take_headword(context, pos + 1):
         yield dataclasses.replace(
             token,
