@@ -87,7 +87,7 @@ EQUIVALENT_SOUNDS = {
 EQUIVALENT_SOUNDS |= {to_katakana(key): to_katakana(val) for key, val in EQUIVALENT_SOUNDS.items()}
 
 
-def unify_repr(reading: str):
+def unify_repr(reading: str) -> str:
     """
     NHK pitch accents file contains entries with redundant readings.
     They only differ by the use of 'ー' or kana characters that sound the same.
@@ -99,7 +99,7 @@ def unify_repr(reading: str):
     return reading
 
 
-def replace_handakuten(reading: str):
+def replace_handakuten(reading: str) -> str:
     # corner cases for some entries present in the NHK 2016 audio source
     return (
         reading.replace("か゚", "が")
@@ -119,7 +119,7 @@ def literal_pronunciation(text: str) -> str:
     return to_katakana(unify_repr(replace_handakuten(text)))
 
 
-def main():
+def main() -> None:
     assert unify_repr("おおうなばら") == "おーうなばら"
     assert unify_repr("おはよう") == "おはよー"
     assert unify_repr("おお") == "おー"
