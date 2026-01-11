@@ -113,7 +113,7 @@ class MecabParsedToken:
     inflection_type: Inflection
 
 
-assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(COMPONENTS.__annotations__)
+assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(type(COMPONENTS).__annotations__)
 
 
 def main():
