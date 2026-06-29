@@ -62,7 +62,7 @@ def is_kana_str(word: str) -> bool:
     return all(map(is_kana_char, word))
 
 
-def main():
+def main() -> None:
     assert (
         to_hiragana("<div>オープンソース形態素解析エンジンです。Test 😀")
         == "<div>おーぷんそーす形態素解析えんじんです。Test 😀"

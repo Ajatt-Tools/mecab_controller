@@ -6,7 +6,7 @@ import sys
 from .mecab_controller import MecabController
 
 
-def main():
+def main() -> None:
     mecab = MecabController(verbose=False)
     print(mecab.reading(" ".join(sys.argv[1:])))
 

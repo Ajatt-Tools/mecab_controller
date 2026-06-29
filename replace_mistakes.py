@@ -24,14 +24,14 @@ def replace_mistakes(tokens: Iterable[MecabParsedToken]) -> Iterable[MecabParsed
         yield from replace_mistake(wrapped.token, consumed, idx)
 
 
-def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Optional[tuple[str, ...]]:
+def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> tuple[str, ...] | None:
     try:
         return tuple(context[idx].token.headword for idx in range(start, end))
     except IndexError:
         return None
 
 
-def take_headword(context: Sequence[WrappedToken], pos: int) -> Optional[str]:
+def take_headword(context: Sequence[WrappedToken], pos: int) -> str | None:
     try:
         return context[pos].token.headword
     except IndexError:

@@ -4,7 +4,7 @@
 import functools
 import os
 import subprocess
-from typing import Optional
+from typing import Any, Optional
 
 try:
     from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
@@ -16,7 +16,7 @@ MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
 
 
 @functools.cache
-def startup_info():
+def startup_info() -> Any:
     if IS_WIN:
         # Prevents a console window from popping up on Windows
         si = subprocess.STARTUPINFO()
@@ -27,7 +27,7 @@ def startup_info():
 
 
 @functools.cache
-def find_best_dic_dir():
+def find_best_dic_dir() -> str | None:
     """
     If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
     """
@@ -51,7 +51,7 @@ def normalize_for_platform(popen: list[str]) -> list[str]:
     return popen
 
 
-def check_mecab_rc():
+def check_mecab_rc() -> None:
     if not os.path.isfile(MECAB_RC_PATH):
         with open(MECAB_RC_PATH, "w") as f:
             # create mecabrc if it doesn't exist
@@ -87,8 +87,8 @@ class BasicMecabController:
 
     def __init__(
         self,
-        mecab_cmd: Optional[list[str]] = None,
-        mecab_args: Optional[list[str]] = None,
+        mecab_cmd: list[str] | None = None,
+        mecab_args: list[str] | None = None,
         verbose: bool = False,
     ) -> None:
         super().__init__()
@@ -124,7 +124,7 @@ class BasicMecabController:
         return str_out
 
 
-def main():
+def main() -> None:
     mecab = BasicMecabController()
 
     try_expressions = (

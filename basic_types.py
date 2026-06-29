@@ -53,7 +53,7 @@ class PartOfSpeech(enum.Enum):
     adnominal_adjective = "連体詞"  # e.g. いかなる, ろくな, この, いろんな, 小さな
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: object) -> "PartOfSpeech":
         """
         If mecab for some reason outputs something that's not a member of this enum,
         fall back to "unknown".
@@ -96,7 +96,7 @@ class Inflection(enum.Enum):
     continuative = "連用形"  # 見つかり, 教わり, いただき, 探し(+た), (弄ば+)れ(+て)
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: object) -> "Inflection":
         """
         If mecab for some reason outputs something that's not a member of this enum,
         fall back to "unknown".
@@ -108,7 +108,7 @@ class Inflection(enum.Enum):
 class MecabParsedToken:
     word: str
     headword: str
-    katakana_reading: Optional[str]  # inflected reading
+    katakana_reading: str | None  # inflected reading
     part_of_speech: PartOfSpeech
     inflection_type: Inflection
 
@@ -116,7 +116,7 @@ class MecabParsedToken:
 assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(type(COMPONENTS).__annotations__)
 
 
-def main():
+def main() -> None:
     for k in COMPONENTS:
         print(k)
     print(PartOfSpeech("invalid"))

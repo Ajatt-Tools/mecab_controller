@@ -13,7 +13,7 @@ class Dismembered(NamedTuple):
     reading: str
     tail: str
 
-    def assemble(self):
+    def assemble(self) -> str:
         return f"{self.word}[{self.reading}]{self.tail}"
 
 
@@ -22,7 +22,7 @@ class CompoundSplit(NamedTuple):
     second: Dismembered
 
 
-def dismember(expr: str) -> Optional[Dismembered]:
+def dismember(expr: str) -> Dismembered | None:
     if (furigana_start := expr.find("[")) < 1:
         return None
     elif (furigana_end := expr.find("]")) < 3:
@@ -35,7 +35,7 @@ def dismember(expr: str) -> Optional[Dismembered]:
         )
 
 
-def find_common_prefix_len(common_stem: str, common_reading: str):
+def find_common_prefix_len(common_stem: str, common_reading: str) -> int:
     common_len = 0
     for c1, c2 in zip(common_stem, common_reading):
         if c1 != c2:
@@ -44,7 +44,7 @@ def find_common_prefix_len(common_stem: str, common_reading: str):
     return common_len
 
 
-def find_common_kana(expr: Dismembered) -> Optional[CompoundSplit]:
+def find_common_kana(expr: Dismembered) -> CompoundSplit | None:
     start_index = max(1, find_common_prefix_len(expr.word, expr.reading))
 
     for word_idx in range(start_index, len(expr.word)):
