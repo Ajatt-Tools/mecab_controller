@@ -118,7 +118,7 @@ class BasicMecabController:
                 bufsize=-1,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 startupinfo=startup_info(),
                 env=mecab_subprocess_environment(),
             )
