@@ -1,6 +1,6 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-
+import dataclasses
 import functools
 import os
 import subprocess
@@ -66,12 +66,21 @@ def mecab_output_to_str(outs: bytes) -> str:
     return outs.rstrip(b"\r\n").decode("utf-8", "replace")
 
 
+class MecabProcessError(RuntimeError):
+    """Raised when the MeCab subprocess cannot start or exits unsuccessfully."""
+
+
 def prepend_library_path() -> None:
     for library_path in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"):
         try:
             os.environ[library_path] = f"{SUPPORT_DIR}:{os.environ[library_path]}"
         except KeyError:
             os.environ[library_path] = SUPPORT_DIR
+
+
+def mecab_failure_message(return_code: int, stdout: bytes, stderr: bytes) -> str:
+    """Format a diagnostic message for a MeCab process failure."""
+    return f"MeCab exited with status {return_code}. stdout: {stdout!r}. stderr: {stderr!r}."
 
 
 class BasicMecabController:
@@ -109,14 +118,22 @@ class BasicMecabController:
                 stderr=subprocess.STDOUT,
                 startupinfo=startup_info(),
             )
-        except OSError:
-            raise Exception("Please ensure your Linux system has 64 bit binary support.")
+        except OSError as ex:
+            raise MecabProcessError(
+                f"Unable to start MeCab: {ex}. Please ensure your GNU/Linux system has 64 bit binary support."
+            ) from ex
 
         try:
             outs, errs = proc.communicate(expr_to_bytes(expr), timeout=5)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as ex:
             proc.kill()
             outs, errs = proc.communicate()
+            raise MecabProcessError(f"MeCab timed out after 5 seconds. stdout: {outs!r}. stderr: {errs!r}.") from ex
+        except OSError as ex:
+            raise MecabProcessError(f"Unable to communicate with MeCab: {ex}") from ex
+
+        if proc.returncode:
+            raise MecabProcessError(mecab_failure_message(proc.returncode, outs, errs))
 
         str_out = mecab_output_to_str(outs)
         if "tagger.cpp" in str_out and "no such file or directory" in str_out:
