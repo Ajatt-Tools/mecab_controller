@@ -96,6 +96,7 @@ class BasicMecabController:
     ]
     _mecab_args: list[str] = []
     _verbose: bool
+    _timeout_sec: int = 5
 
     def __init__(
         self,
@@ -127,11 +128,11 @@ class BasicMecabController:
             ) from ex
 
         try:
-            outs, errs = proc.communicate(expr_to_bytes(expr), timeout=5)
+            outs, errs = proc.communicate(expr_to_bytes(expr), timeout=self._timeout_sec)
         except subprocess.TimeoutExpired as ex:
             proc.kill()
             outs, errs = proc.communicate()
-            raise MecabProcessError(f"MeCab timed out after 5 seconds. stdout: {outs!r}. stderr: {errs!r}.") from ex
+            raise MecabProcessError(f"MeCab timed out after {self._timeout_sec} seconds. stdout: {outs!r}. stderr: {errs!r}.") from ex
         except OSError as ex:
             raise MecabProcessError(f"Unable to communicate with MeCab: {ex}") from ex
 
