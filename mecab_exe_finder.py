@@ -9,6 +9,13 @@ import sys
 IS_MAC = sys.platform.startswith("darwin")
 IS_WIN = sys.platform.startswith("win32")
 SUPPORT_DIR = os.path.join(os.path.dirname(__file__), "support")
+HARDCODED_PATHS = (
+    "/usr/bin",
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/bin",
+    os.path.join(os.getenv("HOME", "/home/user"), ".local", "bin"),
+)
 
 
 @functools.cache
@@ -36,10 +43,20 @@ def get_bundled_executable(name: str) -> str:
     return path_to_exe
 
 
+def find_executable_hardcoded(name: str) -> str | None:
+    """Return an executable from standard locations omitted from GUI application PATH values."""
+    for path_to_dir in HARDCODED_PATHS:
+        if os.path.isfile(path_to_exe := os.path.join(path_to_dir, name)):
+            return path_to_exe
+    return None
+
+
 @functools.cache
 def find_executable(name: str) -> str:
     """
-    If possible, use the executable installed in the system.
-    Otherwise, use the executable provided in the support directory.
+    Return a system executable, then a standard fallback path, then the bundled executable.
+
+    macOS GUI applications commonly omit Homebrew from PATH, so inspect its
+    standard install location before falling back to the bundled executable.
     """
-    return shutil.which(name) or get_bundled_executable(name)
+    return shutil.which(name) or find_executable_hardcoded(name) or get_bundled_executable(name)
