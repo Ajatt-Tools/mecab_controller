@@ -70,12 +70,15 @@ class MecabProcessError(RuntimeError):
     """Raised when the MeCab subprocess cannot start or exits unsuccessfully."""
 
 
-def prepend_library_path() -> None:
+def mecab_subprocess_environment() -> dict[str, str]:
+    """Return a private environment that loads AJT's bundled MeCab library first."""
+    environment = os.environ.copy()
     for library_path in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"):
         try:
-            os.environ[library_path] = f"{SUPPORT_DIR}:{os.environ[library_path]}"
+            environment[library_path] = f"{SUPPORT_DIR}{os.pathsep}{environment[library_path]}"
         except KeyError:
-            os.environ[library_path] = SUPPORT_DIR
+            environment[library_path] = SUPPORT_DIR
+    return environment
 
 
 def mecab_failure_message(return_code: int, stdout: bytes, stderr: bytes) -> str:
@@ -104,7 +107,6 @@ class BasicMecabController:
         check_mecab_rc()
         self._verbose = verbose
         self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or self._mecab_args))
-        prepend_library_path()
         if self._verbose:
             print("mecab cmd:", self._mecab_cmd)
 
@@ -117,6 +119,7 @@ class BasicMecabController:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 startupinfo=startup_info(),
+                env=mecab_subprocess_environment(),
             )
         except OSError as ex:
             raise MecabProcessError(
