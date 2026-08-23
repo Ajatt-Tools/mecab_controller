@@ -12,7 +12,7 @@ except ImportError:
     from mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
 
 INPUT_BUFFER_SIZE = str(819200)
-MECAB_RC_PATH = os.path.join(SUPPORT_DIR, "mecabrc")
+MECAB_RC_PATH = SUPPORT_DIR / "mecabrc"
 
 
 @functools.cache
@@ -52,10 +52,12 @@ def normalize_for_platform(popen: list[str]) -> list[str]:
 
 
 def check_mecab_rc() -> None:
-    if not os.path.isfile(MECAB_RC_PATH):
-        with open(MECAB_RC_PATH, "w") as f:
-            # create mecabrc if it doesn't exist
-            f.write("")
+    """
+    create mecabrc if it doesn't exist
+    """
+    if MECAB_RC_PATH.is_file():
+        return
+    MECAB_RC_PATH.write_text("", encoding="utf-8")
 
 
 def expr_to_bytes(expr: str) -> bytes:
