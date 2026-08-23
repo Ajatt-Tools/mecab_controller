@@ -1,10 +1,10 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-import dataclasses
 import functools
 import os
 import subprocess
-from typing import Any, Optional
+from collections.abc import Sequence
+from typing import Any
 
 try:
     from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
@@ -27,7 +27,7 @@ def startup_info() -> Any:
 
 
 @functools.cache
-def find_best_dic_dir() -> str | None:
+def find_best_dic_dir() -> str:
     """
     If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
     """
@@ -42,7 +42,7 @@ def find_best_dic_dir() -> str | None:
     for directory in possible_locations:
         if os.path.isdir(directory):
             return directory
-    return SUPPORT_DIR
+    return str(SUPPORT_DIR)
 
 
 def normalize_for_platform(popen: list[str]) -> list[str]:
@@ -79,7 +79,7 @@ def mecab_subprocess_environment() -> dict[str, str]:
         try:
             environment[library_path] = f"{SUPPORT_DIR}{os.pathsep}{environment[library_path]}"
         except KeyError:
-            environment[library_path] = SUPPORT_DIR
+            environment[library_path] = str(SUPPORT_DIR)
     return environment
 
 
@@ -91,10 +91,10 @@ def mecab_failure_message(return_code: int, stdout: bytes, stderr: bytes) -> str
 class BasicMecabController:
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
-        "--dicdir=" + find_best_dic_dir(),
-        "--rcfile=" + MECAB_RC_PATH,
-        "--userdic=" + os.path.join(SUPPORT_DIR, "user_dic.dic"),
-        "--input-buffer-size=" + INPUT_BUFFER_SIZE,
+        f"--dicdir={find_best_dic_dir()}",
+        f"--rcfile={MECAB_RC_PATH}",
+        f"--userdic={SUPPORT_DIR.joinpath('user_dic.dic')}",
+        f"--input-buffer-size={INPUT_BUFFER_SIZE}",
     ]
     _mecab_args: list[str] = []
     _verbose: bool
