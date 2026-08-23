@@ -83,11 +83,6 @@ def mecab_subprocess_environment() -> dict[str, str]:
     return environment
 
 
-def mecab_failure_message(return_code: int, stdout: bytes, stderr: bytes) -> str:
-    """Format a diagnostic message for a MeCab process failure."""
-    return f"MeCab exited with status {return_code}. stdout: {stdout!r}. stderr: {stderr!r}."
-
-
 class BasicMecabController:
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
@@ -125,9 +120,7 @@ class BasicMecabController:
                 env=mecab_subprocess_environment(),
             )
         except OSError as ex:
-            raise MecabProcessError(
-                f"Unable to start MeCab: {ex}. Please ensure your GNU/Linux system has 64 bit binary support."
-            ) from ex
+            raise MecabProcessError(f"Unable to start MeCab command {self._mecab_cmd!r}: {ex}") from ex
 
         try:
             outs, errs = proc.communicate(expr_to_bytes(expr), timeout=self._timeout_sec)
@@ -135,13 +128,19 @@ class BasicMecabController:
             proc.kill()
             outs, errs = proc.communicate()
             raise MecabProcessError(
-                f"MeCab timed out after {self._timeout_sec} seconds. stdout: {outs!r}. stderr: {errs!r}."
+                f"MeCab command {self._mecab_cmd!r} timed out after {self._timeout_sec} seconds."
+                f" stderr: {mecab_output_to_str(errs)}"
             ) from ex
         except OSError as ex:
-            raise MecabProcessError(f"Unable to communicate with MeCab: {ex}") from ex
+            raise MecabProcessError(
+                f"Unable to communicate with MeCab command {self._mecab_cmd!r}: {ex}",
+            ) from ex
 
         if proc.returncode:
-            raise MecabProcessError(mecab_failure_message(proc.returncode, outs, errs))
+            raise MecabProcessError(
+                f"MeCab exited with status {proc.returncode}. command: {self._mecab_cmd!r}. "
+                f"stderr: {mecab_output_to_str(errs)}."
+            )
 
         str_out = mecab_output_to_str(outs)
         if "tagger.cpp" in str_out and "no such file or directory" in str_out:
