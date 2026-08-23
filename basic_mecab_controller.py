@@ -1,10 +1,10 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+import contextlib
 import functools
 import os
 import subprocess
-from collections.abc import Sequence
-from typing import Any
+import typing
 
 try:
     from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
@@ -12,11 +12,12 @@ except ImportError:
     from mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
 
 INPUT_BUFFER_SIZE = str(819200)
+MECAB_TIMEOUT_SEC = 5
 MECAB_RC_PATH = SUPPORT_DIR / "mecabrc"
 
 
 @functools.cache
-def startup_info() -> Any:
+def startup_info() -> typing.Any:
     if IS_WIN:
         # Prevents a console window from popping up on Windows
         si = subprocess.STARTUPINFO()
@@ -60,16 +61,15 @@ def check_mecab_rc() -> None:
     MECAB_RC_PATH.write_text("", encoding="utf-8")
 
 
-def expr_to_bytes(expr: str) -> bytes:
-    return expr.encode("utf-8", "ignore") + b"\n"
-
-
-def mecab_output_to_str(outs: bytes) -> str:
-    return outs.rstrip(b"\r\n").decode("utf-8", "replace")
-
-
 class MecabProcessError(RuntimeError):
     """Raised when the MeCab subprocess cannot start or exits unsuccessfully."""
+
+
+class MecabProcessOutput(typing.NamedTuple):
+    """Capture the separate standard streams emitted by a MeCab process."""
+
+    stdout: str
+    stderr: str
 
 
 def mecab_subprocess_environment() -> dict[str, str]:
@@ -83,6 +83,42 @@ def mecab_subprocess_environment() -> dict[str, str]:
     return environment
 
 
+def kill_and_drain_process(proc: subprocess.Popen[str]) -> MecabProcessOutput:
+    """Terminate a failed MeCab process, reap it, and return its remaining output."""
+    with contextlib.suppress(OSError):
+        proc.kill()
+    try:
+        return MecabProcessOutput(*proc.communicate())
+    except OSError:
+        return MecabProcessOutput("", "")
+
+
+def format_error_msg(error: str, output: MecabProcessOutput) -> str:
+    if output.stderr:
+        return f"{error} stderr: {output.stderr}"
+    return error
+
+
+def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list[str]) -> MecabProcessOutput:
+    """Communicate with MeCab and turn timeout or pipe failures into structured errors."""
+    try:
+        return MecabProcessOutput(*proc.communicate(f"{expr}\n", timeout=MECAB_TIMEOUT_SEC))
+    except subprocess.TimeoutExpired as ex:
+        raise MecabProcessError(
+            format_error_msg(
+                f"MeCab command {command!r} timed out after {MECAB_TIMEOUT_SEC} seconds.",
+                output=kill_and_drain_process(proc),
+            )
+        ) from ex
+    except OSError as ex:
+        raise MecabProcessError(
+            format_error_msg(
+                f"Unable to communicate with MeCab command {command!r}: {ex}",
+                output=kill_and_drain_process(proc),
+            )
+        ) from ex
+
+
 class BasicMecabController:
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
@@ -93,7 +129,6 @@ class BasicMecabController:
     ]
     _mecab_args: list[str] = []
     _verbose: bool
-    _timeout_sec: int = 5
 
     def __init__(
         self,
@@ -109,6 +144,7 @@ class BasicMecabController:
             print("mecab cmd:", self._mecab_cmd)
 
     def run(self, expr: str) -> str:
+        """Run MeCab for one expression and return its standard output."""
         try:
             proc = subprocess.Popen(
                 self._mecab_cmd,
@@ -116,36 +152,25 @@ class BasicMecabController:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
                 startupinfo=startup_info(),
                 env=mecab_subprocess_environment(),
             )
         except OSError as ex:
             raise MecabProcessError(f"Unable to start MeCab command {self._mecab_cmd!r}: {ex}") from ex
 
-        try:
-            outs, errs = proc.communicate(expr_to_bytes(expr), timeout=self._timeout_sec)
-        except subprocess.TimeoutExpired as ex:
-            proc.kill()
-            outs, errs = proc.communicate()
-            raise MecabProcessError(
-                f"MeCab command {self._mecab_cmd!r} timed out after {self._timeout_sec} seconds."
-                f" stderr: {mecab_output_to_str(errs)}"
-            ) from ex
-        except OSError as ex:
-            raise MecabProcessError(
-                f"Unable to communicate with MeCab command {self._mecab_cmd!r}: {ex}",
-            ) from ex
+        output = communicate_with_mecab(proc, expr, self._mecab_cmd)
 
         if proc.returncode:
             raise MecabProcessError(
-                f"MeCab exited with status {proc.returncode}. command: {self._mecab_cmd!r}. "
-                f"stderr: {mecab_output_to_str(errs)}."
+                f"MeCab exited with status {proc.returncode}. command: {self._mecab_cmd!r}. stderr: {output.stderr}."
             )
 
-        str_out = mecab_output_to_str(outs)
-        if "tagger.cpp" in str_out and "no such file or directory" in str_out:
+        if "tagger.cpp" in output.stdout and "no such file or directory" in output.stdout:
             raise RuntimeError("Please ensure your Windows user name contains only English characters.")
-        return str_out
+        return output.stdout.strip("\r\n")
 
 
 def main() -> None:
