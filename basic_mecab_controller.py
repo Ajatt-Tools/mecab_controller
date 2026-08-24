@@ -126,6 +126,25 @@ def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list
         ) from ex
 
 
+def start_mecab_process(command: list[str]) -> subprocess.Popen[str]:
+    """Start MeCab with private library paths and UTF-8 text streams."""
+    try:
+        return subprocess.Popen(
+            command,
+            bufsize=-1,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            startupinfo=startup_info(),
+            env=mecab_subprocess_environment(),
+        )
+    except OSError as ex:
+        raise MecabProcessError(f"Unable to start MeCab command {command!r}: {ex}") from ex
+
+
 class BasicMecabController:
     """Run the bundled MeCab executable with AJT's configured dictionaries."""
 
@@ -155,22 +174,7 @@ class BasicMecabController:
 
     def run(self, expr: str) -> str:
         """Run MeCab for one expression and return its standard output."""
-        try:
-            proc = subprocess.Popen(
-                self._mecab_cmd,
-                bufsize=-1,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                startupinfo=startup_info(),
-                env=mecab_subprocess_environment(),
-            )
-        except OSError as ex:
-            raise MecabProcessError(f"Unable to start MeCab command {self._mecab_cmd!r}: {ex}") from ex
-
+        proc = start_mecab_process(self._mecab_cmd)
         output = communicate_with_mecab(proc, expr, self._mecab_cmd)
         if is_windows_username_error(output):
             raise MecabProcessError("Please ensure your Windows user name contains only English characters.")
