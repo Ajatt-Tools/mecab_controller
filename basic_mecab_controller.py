@@ -100,6 +100,12 @@ def format_error_msg(error: str, output: MecabProcessOutput) -> str:
     return error
 
 
+def is_windows_username_error(output: MecabProcessOutput) -> bool:
+    """Return whether MeCab failed because the Windows user name has non-ASCII characters."""
+    diagnostics = f"{output.stdout}\n{output.stderr}"
+    return "tagger.cpp" in diagnostics and "no such file or directory" in diagnostics
+
+
 def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list[str]) -> MecabProcessOutput:
     """Communicate with MeCab and turn timeout or pipe failures into structured errors."""
     try:
@@ -166,14 +172,12 @@ class BasicMecabController:
             raise MecabProcessError(f"Unable to start MeCab command {self._mecab_cmd!r}: {ex}") from ex
 
         output = communicate_with_mecab(proc, expr, self._mecab_cmd)
-
+        if is_windows_username_error(output):
+            raise MecabProcessError("Please ensure your Windows user name contains only English characters.")
         if proc.returncode:
             raise MecabProcessError(
                 f"MeCab exited with status {proc.returncode}. command: {self._mecab_cmd!r}. stderr: {output.stderr}."
             )
-
-        if "tagger.cpp" in output.stdout and "no such file or directory" in output.stdout:
-            raise RuntimeError("Please ensure your Windows user name contains only English characters.")
         return output.stdout.strip("\r\n")
 
 
