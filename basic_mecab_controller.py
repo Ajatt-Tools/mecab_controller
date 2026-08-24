@@ -18,6 +18,7 @@ MECAB_RC_PATH = SUPPORT_DIR / "mecabrc"
 
 @functools.cache
 def startup_info() -> typing.Any:
+    """Return Windows startup settings that suppress the console window."""
     if IS_WIN:
         # Prevents a console window from popping up on Windows
         si = subprocess.STARTUPINFO()
@@ -47,22 +48,21 @@ def find_best_dic_dir() -> str:
 
 
 def normalize_for_platform(popen: list[str]) -> list[str]:
+    """Normalize command paths for the current platform."""
     if IS_WIN:
         popen = [os.path.normpath(x) for x in popen]
     return popen
 
 
 def check_mecab_rc() -> None:
-    """
-    create mecabrc if it doesn't exist
-    """
+    """Create the bundled mecabrc file when it does not exist."""
     if MECAB_RC_PATH.is_file():
         return
     MECAB_RC_PATH.write_text("", encoding="utf-8")
 
 
 class MecabProcessError(RuntimeError):
-    """Raised when the MeCab subprocess cannot start or exits unsuccessfully."""
+    """Raised when MeCab launch, communication, timeout, or exit validation fails."""
 
 
 class MecabProcessOutput(typing.NamedTuple):
@@ -94,6 +94,7 @@ def kill_and_drain_process(proc: subprocess.Popen[str]) -> MecabProcessOutput:
 
 
 def format_error_msg(error: str, output: MecabProcessOutput) -> str:
+    """Append MeCab's standard-error output to an error message when available."""
     if output.stderr:
         return f"{error} stderr: {output.stderr}"
     return error
@@ -120,6 +121,8 @@ def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list
 
 
 class BasicMecabController:
+    """Run the bundled MeCab executable with AJT's configured dictionaries."""
+
     _mecab_cmd: list[str] = [
         find_executable("mecab"),
         f"--dicdir={find_best_dic_dir()}",
@@ -136,6 +139,7 @@ class BasicMecabController:
         mecab_args: list[str] | None = None,
         verbose: bool = False,
     ) -> None:
+        """Initialize MeCab with optional command overrides for standalone use and tests."""
         super().__init__()
         check_mecab_rc()
         self._verbose = verbose
