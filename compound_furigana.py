@@ -1,7 +1,7 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 __all__ = [
     "break_compound_furigana",

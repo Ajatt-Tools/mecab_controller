@@ -4,7 +4,6 @@
 import dataclasses
 import enum
 import typing
-from typing import Optional
 
 
 class Separators:
