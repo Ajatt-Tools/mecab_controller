@@ -31,6 +31,14 @@ def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> tu
         return None
 
 
+def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str | None:
+    """Join token surfaces in a context window or return None if it is incomplete."""
+    try:
+        return "".join(context[idx].token.word for idx in range(start, end))
+    except IndexError:
+        return None
+
+
 def take_headword(context: Sequence[WrappedToken], pos: int) -> str | None:
     try:
         return context[pos].token.headword
@@ -39,7 +47,18 @@ def take_headword(context: Sequence[WrappedToken], pos: int) -> str | None:
 
 
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
-    if token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
+    if (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
+        # Pitch accent lookup indexes both spellings as katakana.
+        context[pos + 1].skip = True
+        context[pos + 2].skip = True
+        yield MecabParsedToken(
+            word=merged_word,
+            headword=merged_word,
+            katakana_reading="カモシレナイ",
+            part_of_speech=PartOfSpeech.bound_auxiliary,
+            inflection_type=Inflection.dictionary_form,
+        )
+    elif token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
     elif token.word == "温玉" and token.headword == "オンセンタマゴ":
         yield dataclasses.replace(
