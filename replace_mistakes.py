@@ -2,7 +2,6 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
 from collections.abc import Iterable, Sequence
-from typing import Optional
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
@@ -46,11 +45,15 @@ def take_headword(context: Sequence[WrappedToken], pos: int) -> str | None:
         return None
 
 
+def skip_context(context: Sequence[WrappedToken], start: int, end: int) -> None:
+    for idx in range(start, end):
+        context[idx].skip = True
+
+
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
     if (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
         # Pitch accent lookup indexes both spellings as katakana.
-        context[pos + 1].skip = True
-        context[pos + 2].skip = True
+        skip_context(context, pos + 1, pos + 3)
         yield MecabParsedToken(
             word=merged_word,
             headword=merged_word,
@@ -146,7 +149,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             headword="旅立つ",
         )
     elif token.word == "羽" and take_headword(context, pos + 1) == "撃":
-        context[pos + 1].skip = True
+        skip_context(context, pos + 1, pos + 2)
         yield MecabParsedToken(
             word="羽撃",
             headword="羽撃く",
@@ -155,8 +158,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             inflection_type=Inflection.irrealis,
         )
     elif token.word == "阿良" and slice_headwords(context, pos + 1, pos + 3) == ("々", "木"):
-        context[pos + 1].skip = True
-        context[pos + 2].skip = True
+        skip_context(context, pos + 1, pos + 3)
         yield MecabParsedToken(
             word="阿良々木",
             headword="阿良々木",
@@ -165,8 +167,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             inflection_type=Inflection.dictionary_form,
         )
     elif token.word == "乗り" and slice_headwords(context, pos + 1, pos + 3) == ("込", "え"):
-        context[pos + 1].skip = True
-        context[pos + 2].skip = True
+        skip_context(context, pos + 1, pos + 3)
         yield MecabParsedToken(
             word="乗り込え",
             headword="乗り込える",
@@ -179,7 +180,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
         and token.katakana_reading == "スケ"
         and slice_headwords(context, pos + 1, pos + 3) == ("から", "ない")
     ):
-        context[pos + 1].skip = True
+        skip_context(context, pos + 1, pos + 2)
         yield MecabParsedToken(
             word="助から",
             headword="助かる",
@@ -188,7 +189,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             inflection_type=Inflection.irrealis,
         )
     elif token.word == "いい気" and take_headword(context, pos + 1) == "分":
-        context[pos + 1].skip = True
+        skip_context(context, pos + 1, pos + 2)
         yield MecabParsedToken(
             word="いい",
             headword="いい",
