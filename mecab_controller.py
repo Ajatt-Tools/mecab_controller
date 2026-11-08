@@ -161,6 +161,7 @@ def main() -> None:
         "打付ける,打付けた",
         "遣る方無い",
         "死んだよ",
+        "卵胞ホルモンと接ぎ目と足浴",
     )
     for idx, expr in enumerate(try_expressions):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")

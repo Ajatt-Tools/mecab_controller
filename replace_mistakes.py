@@ -351,5 +351,14 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             part_of_speech=PartOfSpeech.adverb,
             inflection_type=Inflection.unknown,
         )
+    elif token.headword == "接ぎ目":
+        yield dataclasses.replace(token, katakana_reading="ツギメ")
+    elif token.headword == "卵胞ホルモン":
+        yield dataclasses.replace(token, katakana_reading="ランポウホルモン")
+    elif token.headword == "足浴":
+        yield dataclasses.replace(token, katakana_reading="ソクヨク")
+    elif token.headword == "足" and take_headword(context, pos + 1) == "浴":
+        skip_context(context, pos + 1, pos + 2)
+        yield dataclasses.replace(token, word="足浴", headword="足浴", katakana_reading="ソクヨク")
     else:
         yield token
