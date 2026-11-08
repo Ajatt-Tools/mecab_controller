@@ -27,3 +27,8 @@ You don't need to do anything extra.
 python -m mecab_controller 昨日すき焼きを食べました
 昨日[きのう]すき 焼[や]きを 食[た]べました
 ```
+
+## Sources
+
+The bundled `user_dic.dic` comes from
+[this project](https://web.archive.org/web/20250829020006/https://sourceforge.net/projects/japanesetextana/files/JapaneseTextAnalysisTool_v5.4/).
