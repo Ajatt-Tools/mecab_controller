@@ -1,12 +1,15 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
+import re
 from collections.abc import Iterable, Sequence
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
 except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
+
+RE_NUMERAL_WORD = re.compile(r"[〇零一二三四五六七八九十百千万億兆０-９0-9]+")
 
 
 @dataclasses.dataclass
@@ -50,8 +53,50 @@ def skip_context(context: Sequence[WrappedToken], start: int, end: int) -> None:
         context[idx].skip = True
 
 
+def token_comes_after_number(context: Sequence[WrappedToken], pos: int) -> bool:
+    """Check whether the preceding token consists entirely of number characters."""
+    # 十一人 is じゅういちにん, not じゅうひとり.
+    return pos > 0 and RE_NUMERAL_WORD.fullmatch(context[pos - 1].token.word) is not None
+
+
+def token_comes_before_regular_person_counter_suffix(context: Sequence[WrappedToken], pos: int) -> bool:
+    """Check for a following 称, 前, or whole 三脚 token, which needs a regular person-counter reading."""
+    # 一人称, 一人前, and 二人三脚 also use the regular counter.
+    return take_headword(context, pos + 1) in ("称", "前", "三脚")
+
+
+def token_comes_before_split_sankyaku(context: Sequence[WrappedToken], pos: int) -> bool:
+    """Check whether the following two token surfaces spell 三脚 in an expression such as 二人三脚."""
+    return slice_context(context, pos + 1, pos + 3) == "三脚"
+
+
+def needs_regular_person_counter_reading(context: Sequence[WrappedToken], pos: int) -> bool:
+    """Check the surrounding tokens for a regular rather than native one/two-person counter reading."""
+    # 十一人 is じゅういちにん, not じゅうひとり.
+    # 一人称 and 二人三脚 also use the regular counter.
+    return (
+        token_comes_after_number(context, pos)  # 一人 after number: 十一人
+        or token_comes_before_regular_person_counter_suffix(context, pos)  # 一人 before 称: 一人称
+        or token_comes_before_split_sankyaku(context, pos)  # 二人 before 三 and 脚: 二人三脚
+    )
+
+
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
-    if (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
+    if token.headword == "一人" and needs_regular_person_counter_reading(context, pos):
+        yield dataclasses.replace(token, katakana_reading="イチニン")
+    elif token.headword == "二人" and needs_regular_person_counter_reading(context, pos):
+        yield dataclasses.replace(token, katakana_reading="ニニン")
+    elif token.headword == "一人" and take_headword(context, pos + 1) == "相撲":
+        # Keep the compound's voiced ずもう when the counter entry splits 一人相撲 into two words.
+        # Preserve 1人相撲 and １人相撲 as written instead of replacing their digits with kanji.
+        skip_context(context, pos + 1, pos + 2)
+        yield dataclasses.replace(
+            token,
+            word=token.word + "相撲",
+            headword="一人相撲",
+            katakana_reading="ヒトリズモウ",
+        )
+    elif (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
         # Pitch accent lookup indexes both spellings as katakana.
         skip_context(context, pos + 1, pos + 3)
         yield MecabParsedToken(
