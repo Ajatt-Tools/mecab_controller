@@ -1,6 +1,8 @@
 # Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
+import unicodedata
+
 try:
     from .kana_conv import to_katakana
 except ImportError:
@@ -116,7 +118,12 @@ def replace_handakuten(reading: str) -> str:
 
 
 def literal_pronunciation(text: str) -> str:
-    return to_katakana(unify_repr(replace_handakuten(text)))
+    """Return a canonical katakana pronunciation across Unicode, vowel, nasal, and compound spellings."""
+    # NFKC expands half-width kana and middle dots before compound separators are removed.
+    # https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+    text = unicodedata.normalize("NFKC", text).replace("・", "")
+    # Mixed-script リょウシん needs a single script before long-vowel matching to produce リョーシン in one pass.
+    return unify_repr(replace_handakuten(to_katakana(text)))
 
 
 def main() -> None:
@@ -129,6 +136,11 @@ def main() -> None:
     assert literal_pronunciation("がっこう") == "ガッコー"
     assert literal_pronunciation("イマハ") == "イマワ"
     assert literal_pronunciation("リュウ") == "リュー"
+    assert literal_pronunciation("リょウシん") == "リョーシン"
+    assert literal_pronunciation("コ゚ょウシん") == "ゴョーシン"
+    assert literal_pronunciation("コ゚ょく゚シん") == "ゴョグシン"
+    assert literal_pronunciation("ﾘｮｳｼﾝ") == "リョーシン"
+    assert literal_pronunciation("ｷｼ･ｶｲｾｲ") == "キシカイセー"
     print("Ok.")
 
 
