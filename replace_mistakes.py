@@ -55,10 +55,14 @@ def skip_context(context: Sequence[WrappedToken], start: int, end: int | None = 
         context[idx].skip = True
 
 
+def is_numeral_string(string: str) -> bool:
+    return RE_NUMERAL_WORD.fullmatch(string) is not None
+
+
 def token_comes_after_number(context: Sequence[WrappedToken], pos: int) -> bool:
     """Check whether the preceding token consists entirely of number characters."""
     # 十一人 is じゅういちにん, not じゅうひとり.
-    return pos > 0 and RE_NUMERAL_WORD.fullmatch(context[pos - 1].token.word) is not None
+    return pos > 0 and is_numeral_string(context[pos - 1].token.word)
 
 
 def token_comes_before_regular_person_counter_suffix(context: Sequence[WrappedToken], pos: int) -> bool:
