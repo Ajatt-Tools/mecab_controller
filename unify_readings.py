@@ -121,9 +121,9 @@ def literal_pronunciation(text: str) -> str:
     """Return a canonical katakana pronunciation across Unicode, vowel, nasal, and compound spellings."""
     # NFKC expands half-width kana and middle dots before compound separators are removed.
     # https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
-    text = unicodedata.normalize("NFKC", text).replace("・", "")
+    text = unicodedata.normalize("NFKC", text)
     # Mixed-script リょウシん needs a single script before long-vowel matching to produce リョーシン in one pass.
-    return unify_repr(replace_handakuten(to_katakana(text)))
+    return unify_repr(replace_handakuten(to_katakana(text.replace("・", "")))) or text
 
 
 def main() -> None:
