@@ -33,19 +33,19 @@ def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> tu
         return None
 
 
-def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str | None:
+def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str:
     """Join token surfaces in a context window or return None if it is incomplete."""
     try:
         return "".join(context[idx].token.word for idx in range(start, end))
     except IndexError:
-        return None
+        return ""
 
 
-def take_headword(context: Sequence[WrappedToken], pos: int) -> str | None:
+def take_headword(context: Sequence[WrappedToken], pos: int) -> str:
     try:
         return context[pos].token.headword
     except IndexError:
-        return None
+        return ""
 
 
 def skip_context(context: Sequence[WrappedToken], start: int, end: int | None = None) -> None:
