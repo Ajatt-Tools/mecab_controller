@@ -1,6 +1,5 @@
-# Copyright: Ren Tatsumoto <tatsu at autistici.org> and contributors
+# Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-
 try:
     from .compound_furigana import break_compound_furigana
     from .kana_conv import is_kana_char
