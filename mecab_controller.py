@@ -103,12 +103,13 @@ class MecabController:
                 part_of_speech, inflection = None, None
 
             if is_kana_str(word) or to_katakana(word) == to_katakana(katakana_reading):
-                katakana_reading = None
+                # Kana and unchanged surfaces need no separate annotation, but token readings stay string-valued.
+                katakana_reading = ""
 
             yield MecabParsedToken(
                 word=word,
                 headword=headword,
-                katakana_reading=(katakana_reading or None),
+                katakana_reading=katakana_reading,
                 part_of_speech=PartOfSpeech(part_of_speech or None),
                 inflection_type=Inflection(inflection or None),
             )

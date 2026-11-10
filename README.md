@@ -28,6 +28,10 @@ python -m mecab_controller 昨日すき焼きを食べました
 昨日[きのう]すき 焼[や]きを 食[た]べました
 ```
 
+Tokens returned by `MecabController.translate()` always have a string-valued `katakana_reading`.
+An empty string means a separate reading is unavailable or unnecessary, such as for kana-only words.
+Check its truthiness before treating it as a nonempty reading.
+
 ## Sources
 
 The bundled `user_dic.dic` comes from

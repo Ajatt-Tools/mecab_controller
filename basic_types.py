@@ -105,9 +105,11 @@ class Inflection(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class MecabParsedToken:
+    """Immutable token with an empty reading when a separate furigana reading is unavailable or unnecessary."""
+
     word: str
     headword: str
-    katakana_reading: str | None  # inflected reading
+    katakana_reading: str  # Inflected reading, or "" when unavailable or unnecessary.
     part_of_speech: PartOfSpeech
     inflection_type: Inflection
 
