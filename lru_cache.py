@@ -35,6 +35,10 @@ class LRUCache(Generic[K, V]):
         self._capacity = capacity
         self._clear_old_items()
 
+    def clear_cached_entries(self) -> None:
+        """Discard cached entries without changing the configured capacity."""
+        self._cache.clear()
+
     def _clear_old_items(self) -> None:
         if self._capacity > 0:
             while len(self._cache) > self._capacity:
