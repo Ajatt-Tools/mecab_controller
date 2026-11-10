@@ -1,23 +1,21 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-
-"""Convert whole-number spellings for comparisons and lookup fallbacks."""
-
+import enum
 import functools
 import re
 import unicodedata
-from collections.abc import Sequence
 
 from .consts import (
+    ARAB_TO_FULL_WIDTH_DIGITS,
     ARABIC_DIGITS,
     JAPANESE_DIGITS,
     JAPANESE_NUMBER_UNITS,
+    KANJI_TO_DIGITS,
     MAX_NUMERAL_VALUE,
     NUMERAL_CACHE_SIZE,
+    RE_NUMERAL,
 )
-
-RE_NUMERAL = re.compile(r"[0-9０-９零〇一二三四五六七八九十百千万億兆京]+")
-KANJI_TO_DIGITS = str.maketrans(JAPANESE_DIGITS + "〇", ARABIC_DIGITS + "0")
+from .kana_conv import to_katakana
 
 
 def format_kanji_number(value: int) -> str:
@@ -83,36 +81,40 @@ def parse_number(text: str) -> int | None:
     return None
 
 
-def replace_number(match: re.Match[str], *, kanji: bool) -> str:
+class NumeralSpelling(enum.Enum):
+    kanji = enum.auto()
+    arabic = enum.auto()  # Arabic means ASCII numbers.
+    full_width = enum.auto()
+
+
+def replace_number(match: re.Match[str], *, spelling: NumeralSpelling) -> str:
     """Normalize matched digits and convert supported numeral values."""
     # Normalize only the matched numeral so unrelated full-width letters and kana stay unchanged.
     # https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
     normalized_number = unicodedata.normalize("NFKC", match.group())
     value = parse_number(normalized_number)
-    if value is None:
-        # Padded identifiers still need digit-width conversion: ００１ becomes 001, not 1.
-        return normalized_number
-    if kanji:
-        return format_kanji_number(value)
-    return str(value)
+    arabic = normalized_number
+    if value is not None:
+        arabic = str(value)
+    match spelling:
+        case NumeralSpelling.full_width:
+            return arabic.translate(ARAB_TO_FULL_WIDTH_DIGITS)
+        case NumeralSpelling.arabic:
+            return arabic
+        case NumeralSpelling.kanji:
+            if value is None:
+                # Padded identifiers still need digit-width conversion: ００１ becomes 001, not 1.
+                return normalized_number
+            return format_kanji_number(value)
+    raise ValueError("unreachable")
 
 
 @functools.lru_cache(maxsize=NUMERAL_CACHE_SIZE)
-def numeric_headword_variants(headword: str) -> Sequence[str]:
-    """Return distinct Arabic and kanji whole-number spellings in deterministic order.
-
-    NFKC already makes full-width digits equivalent to ASCII digits during frequency lookup.
-    https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
-    """
-    normalized = unicodedata.normalize("NFKC", headword)
-    return tuple(
-        dict.fromkeys(
-            RE_NUMERAL.sub(functools.partial(replace_number, kanji=kanji), normalized) for kanji in (False, True)
-        )
-    )
+def convert_numbers(text: str, *, spelling: NumeralSpelling) -> str:
+    """Convert numbers to the requested spelling while preserving surrounding text."""
+    return RE_NUMERAL.sub(functools.partial(replace_number, spelling=spelling), text)
 
 
-@functools.lru_cache(maxsize=NUMERAL_CACHE_SIZE)
 def to_arabic_numbers(text: str) -> str:
     """
     Convert numbers to ASCII digits without changing the surrounding text.
@@ -122,4 +124,13 @@ def to_arabic_numbers(text: str) -> str:
     """
     # Do not normalize text here. replace_number() applies NFKC only to each RE_NUMERAL match.
     # Normalizing the whole string would also change Ａ to A and ｶﾀｶﾅ to カタカナ.
-    return RE_NUMERAL.sub(functools.partial(replace_number, kanji=False), text)
+    return convert_numbers(text, spelling=NumeralSpelling.arabic)
+
+
+def normalize_headword(headword: str) -> str:
+    """Normalize compatibility characters, kana, and whole-number spellings for indexing.
+
+    https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+    """
+    # Normalize first because characters like ゟ expand to hiragana that must then become katakana.
+    return to_arabic_numbers(to_katakana(unicodedata.normalize("NFKC", headword)))

@@ -6,7 +6,7 @@ from collections.abc import Iterable, Sequence
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
-    from .numerals import to_arabic_numbers
+    from .word_conv import to_arabic_numbers
 except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
     from numerals import to_arabic_numbers
