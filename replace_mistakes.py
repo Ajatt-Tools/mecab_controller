@@ -6,10 +6,14 @@ from collections.abc import Iterable, Sequence
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
+    from .numerals import to_arabic_numbers
 except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
+    from numerals import to_arabic_numbers
+
 
 RE_NUMERAL_WORD = re.compile(r"[〇零一二三四五六七八九十百千万億兆０-９0-9]+")
+RE_COUNTER_WORD = re.compile(r"ヶ月|人称|人前|[つ月日筋隻丁品番枚時回円万歳限人]")
 
 
 @dataclasses.dataclass
@@ -55,8 +59,31 @@ def skip_context(context: Sequence[WrappedToken], start: int, end: int | None = 
         context[idx].skip = True
 
 
-def is_numeral_string(string: str) -> bool:
-    return RE_NUMERAL_WORD.fullmatch(string) is not None
+def merge_context(
+    context: Sequence[WrappedToken], *, pos: int, end: int, new_katakana_reading: str = ""
+) -> MecabParsedToken:
+    """Concatenate token words, headwords, and readings, optionally replacing the combined reading."""
+    # Keep token-boundary matching in the ordered rules, not in a second parser.
+    # https://docs.python.org/3/library/dataclasses.html#dataclasses.replace
+    skip_context(context, pos + 1, end)
+    tokens = tuple(wrapped.token for wrapped in context[pos:end])
+    return dataclasses.replace(
+        tokens[0],
+        word="".join(token.word for token in tokens),
+        headword="".join(token.headword for token in tokens),
+        # ９[キュウ] + 円[エン] → ９円[キュウエン]. Empty readings add no characters.
+        katakana_reading=new_katakana_reading or "".join(token.katakana_reading for token in tokens),
+    )
+
+
+def is_numeral_string(string: str | None) -> bool:
+    """Recognize complete numeral strings in kanji, ASCII, or full-width digits."""
+    return RE_NUMERAL_WORD.fullmatch(string or "") is not None
+
+
+def is_counter_string(string: str | None) -> bool:
+    """Recognize whole counter words without matching prefixes of longer words."""
+    return RE_COUNTER_WORD.fullmatch(string or "") is not None
 
 
 def token_comes_after_number(context: Sequence[WrappedToken], pos: int) -> bool:
@@ -87,21 +114,71 @@ def needs_regular_person_counter_reading(context: Sequence[WrappedToken], pos: i
     )
 
 
+def correct_person_counter_reading(token: MecabParsedToken) -> MecabParsedToken:
+    """Use ヒトリ/フタリ for combined one/two-person counters, leaving other tokens unchanged."""
+    match to_arabic_numbers(token.headword):
+        case "1人":
+            # １人[イチニン] → １人[ヒトリ]
+            return dataclasses.replace(token, katakana_reading="ヒトリ")
+        case "2人":
+            # ２人[ニニン] → ２人[フタリ]
+            return dataclasses.replace(token, katakana_reading="フタリ")
+        case _:
+            return token
+
+
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
-    if token.headword == "一人" and needs_regular_person_counter_reading(context, pos):
+    if to_arabic_numbers(slice_context(context, pos, pos + 4)) == "2人3脚":
+        # ２ + 人 + 三 + 脚 → ２人三脚
+        # Match ２ + 人 + 三 + 脚 before the generic ２ + 人 rule consumes the numeral.
+        yield merge_context(context, pos=pos, end=pos + 4, new_katakana_reading="ニニンサンキャク")
+    elif to_arabic_numbers(slice_context(context, pos, pos + 3)) == "1人相撲":
+        # １ + 人 + 相撲 → １人相撲
+        # １ + 人 + 相撲 needs ひとりずもう, not concatenated いちにんすもう.
+        yield merge_context(context, pos=pos, end=pos + 3, new_katakana_reading="ヒトリズモウ")
+    elif to_arabic_numbers(slice_context(context, pos, pos + 3)) == "2人3脚":
+        # ２ + 人 + 三脚 → ２人三脚, or 二人 + 三 + 脚 → 二人三脚
+        yield merge_context(context, pos=pos, end=pos + 3, new_katakana_reading="ニニンサンキャク")
+    elif to_arabic_numbers(slice_context(context, pos, pos + 2)) == "2人3脚":
+        # ２人 + 三脚 → ２人三脚
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="ニニンサンキャク")
+    elif to_arabic_numbers(token.headword) == "1人" and take_headword(context, pos + 1) in ("称", "前"):
+        # １人 + 称 → １人称, or １人 + 前 → １人前
+        other = context[pos + 1].token
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="イチニン" + other.katakana_reading)
+    elif to_arabic_numbers(token.headword) == "2人" and take_headword(context, pos + 1) in ("称", "前"):
+        # ２人 + 称 → ２人称, or ２人 + 前 → ２人前
+        other = context[pos + 1].token
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="ニニン" + other.katakana_reading)
+    elif to_arabic_numbers(token.headword) == "1人" and needs_regular_person_counter_reading(context, pos):
+        # 十 + 一人: read 一人 as イチニン, not ヒトリ.
         yield dataclasses.replace(token, katakana_reading="イチニン")
-    elif token.headword == "二人" and needs_regular_person_counter_reading(context, pos):
+    elif to_arabic_numbers(token.headword) == "2人" and needs_regular_person_counter_reading(context, pos):
+        # 十 + 二人: read 二人 as ニニン, not フタリ.
         yield dataclasses.replace(token, katakana_reading="ニニン")
-    elif token.headword == "一人" and take_headword(context, pos + 1) == "相撲":
+    elif to_arabic_numbers(slice_context(context, pos, pos + 2)) == "1人相撲":
+        # １人 + 相撲 → １人相撲, or １ + 人相撲 → １人相撲
         # Keep the compound's voiced ずもう when the counter entry splits 一人相撲 into two words.
         # Preserve 1人相撲 and １人相撲 as written instead of replacing their digits with kanji.
-        skip_context(context, pos + 1)
-        yield dataclasses.replace(
-            token,
-            word=token.word + "相撲",
-            headword="一人相撲",
-            katakana_reading="ヒトリズモウ",
-        )
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="ヒトリズモウ")
+    elif is_numeral_string(token.headword) and slice_headwords(context, pos + 1, pos + 3) in (
+        ("人", "称"),
+        ("人", "前"),
+    ):
+        # １ + 人 + 称 → １人称, or ２ + 人 + 前 → ２人前
+        # Match complete 称 or 前 tokens, never the first character of 称賛 or 前進.
+        other = context[pos + 2].token
+        reading = token.katakana_reading + "ニン" + other.katakana_reading
+        yield merge_context(context, pos=pos, end=pos + 3, new_katakana_reading=reading)
+    elif (
+        is_numeral_string(token.headword)
+        and is_counter_string(take_headword(context, pos + 1))
+        and not token_comes_after_number(context, pos)
+    ):
+        # １ + 人 → １人, 二 + 日 → 二日, ９ + 円 → ９円
+        # Do not merge only the final ０ + 人 of １ + ０ + ０ + 人.
+        combined = merge_context(context, pos=pos, end=pos + 2)
+        yield correct_person_counter_reading(combined)
     elif (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
         # Pitch accent lookup indexes both spellings as katakana.
         skip_context(context, pos + 1, pos + 3)
