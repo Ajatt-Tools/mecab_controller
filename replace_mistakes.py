@@ -9,7 +9,7 @@ try:
     from .word_conv import to_arabic_numbers
 except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
-    from numerals import to_arabic_numbers
+    from word_conv import to_arabic_numbers
 
 
 RE_NUMERAL_WORD = re.compile(r"[〇零一二三四五六七八九十百千万億兆０-９0-9]+")
