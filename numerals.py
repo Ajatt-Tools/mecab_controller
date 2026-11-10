@@ -1,7 +1,7 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-"""Generate whole-number spelling fallbacks without changing dictionary headwords."""
+"""Convert whole-number spellings for comparisons and lookup fallbacks."""
 
 import functools
 import re
