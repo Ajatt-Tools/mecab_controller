@@ -71,7 +71,7 @@ def parse_number(text: str) -> int | None:
         if len(digits) > len(str(MAX_NUMERAL_VALUE - 1)):
             return None
         return int(digits)
-    # Mixed 1万 notation and malformed units are not guessed during a frequency fallback.
+    # Do not guess the value of mixed 1万 notation or malformed units.
     if any(char in ARABIC_DIGITS for char in text):
         return None
     try:
@@ -115,7 +115,7 @@ def numeric_headword_variants(headword: str) -> Sequence[str]:
 @functools.lru_cache(maxsize=NUMERAL_CACHE_SIZE)
 def to_arabic_numbers(text: str) -> str:
     """
-    Convert supported numeral runs to ASCII digits without changing other characters.
+    Convert numbers to ASCII digits without changing the surrounding text.
     Examples: "二人三脚" -> "2人3脚", "Ａ一号" -> "Ａ1号", "ｶﾀｶﾅ二" -> "ｶﾀｶﾅ2", "００１号" -> "001号", "１万回" -> "1万回".
     Padded identifiers keep their leading zeros.
     Mixed digit/unit notation and malformed or oversized numbers are not evaluated, but their digits become ASCII.
