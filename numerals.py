@@ -16,7 +16,7 @@ from .consts import (
     NUMERAL_CACHE_SIZE,
 )
 
-RE_NUMERAL = re.compile(r"[0-9零〇一二三四五六七八九十百千万億兆京]+")
+RE_NUMERAL = re.compile(r"[0-9０-９零〇一二三四五六七八九十百千万億兆京]+")
 KANJI_TO_DIGITS = str.maketrans(JAPANESE_DIGITS + "〇", ARABIC_DIGITS + "0")
 
 
@@ -84,10 +84,14 @@ def parse_number(text: str) -> int | None:
 
 
 def replace_number(match: re.Match[str], *, kanji: bool) -> str:
-    """Convert a complete numeric run, preserving unsupported spellings verbatim."""
-    value = parse_number(match.group())
+    """Normalize matched digits and convert supported numeral values."""
+    # Normalize only the matched numeral so unrelated full-width letters and kana stay unchanged.
+    # https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+    normalized_number = unicodedata.normalize("NFKC", match.group())
+    value = parse_number(normalized_number)
     if value is None:
-        return match.group()
+        # Padded identifiers still need digit-width conversion: ００１ becomes 001, not 1.
+        return normalized_number
     if kanji:
         return format_kanji_number(value)
     return str(value)
@@ -106,3 +110,16 @@ def numeric_headword_variants(headword: str) -> Sequence[str]:
             RE_NUMERAL.sub(functools.partial(replace_number, kanji=kanji), normalized) for kanji in (False, True)
         )
     )
+
+
+@functools.lru_cache(maxsize=NUMERAL_CACHE_SIZE)
+def to_arabic_numbers(text: str) -> str:
+    """
+    Convert supported numeral runs to ASCII digits without changing other characters.
+    Examples: "二人三脚" -> "2人3脚", "Ａ一号" -> "Ａ1号", "ｶﾀｶﾅ二" -> "ｶﾀｶﾅ2", "００１号" -> "001号", "１万回" -> "1万回".
+    Padded identifiers keep their leading zeros.
+    Mixed digit/unit notation and malformed or oversized numbers are not evaluated, but their digits become ASCII.
+    """
+    # Do not normalize text here. replace_number() applies NFKC only to each RE_NUMERAL match.
+    # Normalizing the whole string would also change Ａ to A and ｶﾀｶﾅ to カタカナ.
+    return RE_NUMERAL.sub(functools.partial(replace_number, kanji=False), text)
