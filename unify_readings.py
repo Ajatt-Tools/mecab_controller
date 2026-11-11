@@ -101,6 +101,7 @@ def unify_repr(reading: str) -> str:
 
 
 def replace_handakuten(reading: str) -> str:
+    """Convert NHK's handakuten-marked ka-row readings to their voiced-kana spellings."""
     # corner cases for some entries present in the NHK 2016 audio source
     return (
         reading.replace("か゚", "が")
@@ -126,6 +127,7 @@ def literal_pronunciation(text: str) -> str:
 
 
 def main() -> None:
+    """Verify pronunciation normalization against representative vowel and Unicode variants."""
     assert unify_repr("おおうなばら") == "おーうなばら"
     assert unify_repr("おはよう") == "おはよー"
     assert unify_repr("おお") == "おー"

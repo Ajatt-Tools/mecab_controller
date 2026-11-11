@@ -6,6 +6,7 @@ from .mecab_controller import MecabController
 
 
 def main() -> None:
+    """Print an Anki-style reading for the expression supplied on the command line."""
     mecab = MecabController(verbose=False)
     print(mecab.reading(" ".join(sys.argv[1:])))
 

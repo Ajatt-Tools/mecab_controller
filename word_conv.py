@@ -82,6 +82,8 @@ def parse_number(text: str) -> int | None:
 
 
 class NumeralSpelling(enum.Enum):
+    """Select kanji, ASCII Arabic digits, or full-width Arabic digits for numeric conversion."""
+
     kanji = enum.auto()
     arabic = enum.auto()  # Arabic means ASCII numbers.
     full_width = enum.auto()

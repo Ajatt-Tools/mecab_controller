@@ -64,6 +64,8 @@ ANY_ATTACHING = "接続"
 
 @enum.unique
 class Inflection(enum.Enum):
+    """Represent MeCab inflection labels, falling back to unknown for unrecognized labels."""
+
     unknown = None
     garu_attached = "ガル接続"  # e.g 苦し (+ がる)
     hypothetical = "仮定形"  # e.g. 出かけれ (+ ば)
@@ -117,6 +119,7 @@ assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tu
 
 
 def main() -> None:
+    """Display configured analysis fields and sample part-of-speech conversions."""
     for k in COMPONENTS:
         print(k)
     print(PartOfSpeech("invalid"))

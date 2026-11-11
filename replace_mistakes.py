@@ -18,6 +18,8 @@ RE_COUNTER_WORD = re.compile(r"ヶ月|人称|人前|[つ月日筋隻丁品番枚
 
 @dataclasses.dataclass
 class WrappedToken:
+    """Track whether an ordered correction has already consumed a token."""
+
     token: MecabParsedToken
     skip: bool = False
 
@@ -31,6 +33,7 @@ def replace_mistakes(tokens: Iterable[MecabParsedToken]) -> Iterable[MecabParsed
 
 
 def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Sequence[str]:
+    """Return headwords in a context window, or an empty sequence if it is incomplete."""
     try:
         return tuple(context[idx].token.headword for idx in range(start, end))
     except IndexError:
@@ -38,7 +41,7 @@ def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Se
 
 
 def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str:
-    """Join token surfaces in a context window or return None if it is incomplete."""
+    """Join token surfaces in a context window, or return an empty string if it is incomplete."""
     try:
         return "".join(context[idx].token.word for idx in range(start, end))
     except IndexError:
@@ -46,6 +49,7 @@ def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str:
 
 
 def take_headword(context: Sequence[WrappedToken], pos: int) -> str:
+    """Return a context token's headword, or an empty string when its position is unavailable."""
     try:
         return context[pos].token.headword
     except IndexError:
@@ -53,6 +57,7 @@ def take_headword(context: Sequence[WrappedToken], pos: int) -> str:
 
 
 def skip_context(context: Sequence[WrappedToken], start: int, end: int | None = None) -> None:
+    """Mark tokens as consumed, defaulting to the single token at start."""
     if end is None:
         end = start + 1
     for idx in range(start, end):
@@ -128,6 +133,11 @@ def correct_person_counter_reading(token: MecabParsedToken) -> MecabParsedToken:
 
 
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
+    """Apply the first matching contextual correction, or yield the original token unchanged.
+
+    This ordered rule block intentionally exceeds the usual function-length limit.
+    Keep it together because precedence and token consumption form one logical correction operation.
+    """
     if to_arabic_numbers(slice_context(context, pos, pos + 4)) == "2人3脚":
         # ２ + 人 + 三 + 脚 → ２人三脚
         # Match ２ + 人 + 三 + 脚 before the generic ２ + 人 rule consumes the numeral.

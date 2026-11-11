@@ -49,6 +49,8 @@ def escape_text(text: str) -> str:
 
 
 class MecabController:
+    """Analyze expressions, correct known tokenization mistakes, and format cached furigana results."""
+
     _mecab_args: list[str] = [
         "--node-format=" + Separators.component.join(component for component in COMPONENTS) + Separators.node,
         "--unk-format=" + COMPONENTS.word + Separators.node,
@@ -65,6 +67,7 @@ class MecabController:
         verbose: bool = False,
         cache_max_size: int = 1024,
     ) -> None:
+        """Configure the native controller and the maximum cached expression count."""
         self._mecab = BasicMecabController(
             mecab_cmd=mecab_cmd,
             mecab_args=(mecab_args or self._mecab_args),

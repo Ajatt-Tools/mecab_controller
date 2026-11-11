@@ -186,6 +186,7 @@ class BasicMecabController:
 
 
 def main() -> None:
+    """Display native MeCab output for a small set of demonstration expressions."""
     mecab = BasicMecabController()
 
     try_expressions = (

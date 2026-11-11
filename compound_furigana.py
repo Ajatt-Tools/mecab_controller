@@ -8,11 +8,14 @@ __all__ = [
 
 
 class Dismembered(NamedTuple):
+    """Store the surface, bracketed reading, and trailing text of a furigana expression."""
+
     word: str
     reading: str
     tail: str
 
     def assemble(self) -> str:
+        """Reassemble this expression using Anki's bracketed reading syntax."""
         return f"{self.word}[{self.reading}]{self.tail}"
 
 
@@ -22,6 +25,7 @@ class CompoundSplit(NamedTuple):
 
 
 def dismember(expr: str) -> Dismembered | None:
+    """Split a bracketed furigana expression, returning None when its brackets are missing or too early."""
     if (furigana_start := expr.find("[")) < 1:
         return None
     elif (furigana_end := expr.find("]")) < 3:
@@ -35,6 +39,7 @@ def dismember(expr: str) -> Dismembered | None:
 
 
 def find_common_prefix_len(common_stem: str, common_reading: str) -> int:
+    """Return the number of matching characters at the beginning of two strings."""
     common_len = 0
     for c1, c2 in zip(common_stem, common_reading):
         if c1 != c2:
@@ -44,6 +49,7 @@ def find_common_prefix_len(common_stem: str, common_reading: str) -> int:
 
 
 def find_common_kana(expr: Dismembered) -> CompoundSplit | None:
+    """Split at matching internal kana, or return None when no suitable boundary is found."""
     start_index = max(1, find_common_prefix_len(expr.word, expr.reading))
 
     for word_idx in range(start_index, len(expr.word)):

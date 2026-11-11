@@ -62,6 +62,7 @@ def is_kana_str(word: str) -> bool:
 
 
 def main() -> None:
+    """Verify sample kana conversions and character classification results."""
     assert (
         to_hiragana("<div>オープンソース形態素解析エンジンです。Test 😀")
         == "<div>おーぷんそーす形態素解析えんじんです。Test 😀"
