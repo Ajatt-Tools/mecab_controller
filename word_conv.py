@@ -5,17 +5,31 @@ import functools
 import re
 import unicodedata
 
-from .consts import (
-    ARAB_TO_FULL_WIDTH_DIGITS,
-    ARABIC_DIGITS,
-    JAPANESE_DIGITS,
-    JAPANESE_NUMBER_UNITS,
-    KANJI_TO_DIGITS,
-    MAX_NUMERAL_VALUE,
-    NUMERAL_CACHE_SIZE,
-    RE_NUMERAL,
-)
-from .kana_conv import to_katakana
+try:
+    from .consts import (
+        ARAB_TO_FULL_WIDTH_DIGITS,
+        ARABIC_DIGITS,
+        JAPANESE_DIGITS,
+        JAPANESE_NUMBER_UNITS,
+        KANJI_TO_DIGITS,
+        MAX_NUMERAL_VALUE,
+        NUMERAL_CACHE_SIZE,
+        RE_NUMERAL,
+    )
+    from .kana_conv import to_katakana
+except ImportError:
+    # Direct-script callers import this module without a package, just like the other controller utilities.
+    from consts import (
+        ARAB_TO_FULL_WIDTH_DIGITS,
+        ARABIC_DIGITS,
+        JAPANESE_DIGITS,
+        JAPANESE_NUMBER_UNITS,
+        KANJI_TO_DIGITS,
+        MAX_NUMERAL_VALUE,
+        NUMERAL_CACHE_SIZE,
+        RE_NUMERAL,
+    )
+    from kana_conv import to_katakana
 
 
 def format_kanji_number(value: int) -> str:
