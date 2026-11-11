@@ -152,7 +152,9 @@ class BasicMecabController:
         find_executable("mecab"),
         f"--dicdir={find_best_dic_dir()}",
         f"--rcfile={MECAB_RC_PATH}",
-        f"--userdic={SUPPORT_DIR.joinpath('user_dic.dic')}",
+        # Load the original EDICT-derived entries alongside the selected system dictionary.
+        # https://taku910.github.io/mecab/dic.html
+        f"--userdic={SUPPORT_DIR / 'user_dic.dic'}",
         f"--input-buffer-size={INPUT_BUFFER_SIZE}",
     ]
     _mecab_args: list[str] = []
