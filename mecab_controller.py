@@ -53,7 +53,7 @@ def escape_text(text: str) -> str:
 class MecabController:
     """Analyze expressions, correct known tokenization mistakes, and format cached furigana results."""
 
-    _mecab_args: list[str] = [
+    _additional_mecab_args: Sequence[str] = [
         "--node-format=" + Separators.component.join(component for component in COMPONENTS) + Separators.node,
         "--unk-format=" + COMPONENTS.word + Separators.node,
         "--eos-format=" + Separators.footer,

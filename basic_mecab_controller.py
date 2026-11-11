@@ -1,10 +1,14 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import contextlib
+import dataclasses
+import enum
 import functools
 import os
+import pathlib
 import subprocess
 import typing
+from collections.abc import Sequence, Iterable
 
 try:
     from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
@@ -29,7 +33,7 @@ def startup_info() -> typing.Any:
 
 
 @functools.cache
-def find_best_dic_dir() -> str:
+def find_best_dic_dir() -> pathlib.Path:
     """
     If the user has mecab-ipadic-neologd (or mecab-ipadic) installed, pick its system dictionary.
     """
@@ -41,16 +45,16 @@ def find_best_dic_dir() -> str:
         "/usr/local/lib/mecab/dic/ipadic",  # for `brew install mecab-ipadic`
         "/opt/homebrew/lib/mecab/dic/ipadic",
     )
-    for directory in possible_locations:
-        if os.path.isdir(directory):
+    for directory in map(pathlib.Path, possible_locations):
+        if directory.is_dir():
             return directory
-    return str(SUPPORT_DIR)
+    return SUPPORT_DIR
 
 
-def normalize_for_platform(popen: list[str]) -> list[str]:
+def normalize_for_platform(popen: Sequence[str]) -> Sequence[str]:
     """Normalize command paths for the current platform."""
     if IS_WIN:
-        popen = [os.path.normpath(x) for x in popen]
+        popen = tuple(os.path.normpath(x) for x in popen)
     return popen
 
 
@@ -101,12 +105,12 @@ def format_error_msg(error: str, output: MecabProcessOutput) -> str:
 
 
 def is_windows_username_error(output: MecabProcessOutput) -> bool:
-    """Return whether MeCab failed because the Windows user name has non-ASCII characters."""
+    """Return whether MeCab failed because the Windows username has non-ASCII characters."""
     diagnostics = f"{output.stdout}\n{output.stderr}"
     return "tagger.cpp" in diagnostics and "no such file or directory" in diagnostics
 
 
-def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list[str]) -> MecabProcessOutput:
+def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: Sequence[str]) -> MecabProcessOutput:
     """Communicate with MeCab and turn timeout or pipe failures into structured errors."""
     try:
         return MecabProcessOutput(*proc.communicate(f"{expr}\n", timeout=MECAB_TIMEOUT_SEC))
@@ -126,7 +130,7 @@ def communicate_with_mecab(proc: subprocess.Popen[str], expr: str, command: list
         ) from ex
 
 
-def start_mecab_process(command: list[str]) -> subprocess.Popen[str]:
+def start_mecab_process(command: Sequence[str]) -> subprocess.Popen[str]:
     """Start MeCab with private library paths and UTF-8 text streams."""
     try:
         return subprocess.Popen(
