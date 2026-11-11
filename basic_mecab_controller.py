@@ -8,7 +8,7 @@ import os
 import pathlib
 import subprocess
 import typing
-from collections.abc import Sequence, Iterable
+from collections.abc import Iterable, Sequence
 
 try:
     from .mecab_exe_finder import IS_WIN, SUPPORT_DIR, find_executable
@@ -149,32 +149,76 @@ def start_mecab_process(command: Sequence[str]) -> subprocess.Popen[str]:
         raise MecabProcessError(f"Unable to start MeCab command {command!r}: {ex}") from ex
 
 
+class MecabCmdArg(enum.Enum):
+    path_to_mecab_exe = enum.auto()
+    dic_dir_path = enum.auto()
+    rc_file_path = enum.auto()
+    user_dic_paths = enum.auto()
+    input_buffer_size = enum.auto()
+    additional_mecab_args = enum.auto()
+
+
+@dataclasses.dataclass(frozen=True)
+class MecabLaunchOpts:
+    # Finds /usr/bin/mecab or another path by default. Fall backs to the binary in `./support`
+    path_to_mecab_exe: str = find_executable("mecab")
+    dic_dir_path: pathlib.Path = find_best_dic_dir()
+    rc_file_path: pathlib.Path = MECAB_RC_PATH
+    # Load the original EDICT-derived entries alongside the selected system dictionary.
+    # https://taku910.github.io/mecab/dic.html
+    user_dic_paths: Sequence[pathlib.Path] = (SUPPORT_DIR / "user_dic.dic",)
+    input_buffer_size: str = INPUT_BUFFER_SIZE
+    additional_mecab_args: Sequence[str] = ()
+
+    def _iter_mecab_cmd(self) -> Iterable[str]:
+        """
+        additional_mecab_args are used to supply extra args such as --node-format=, --unk-format=, --eos-format=
+        """
+        for opt_key, opt_value in dataclasses.asdict(self).items():
+            if not opt_value:
+                continue
+            match MecabCmdArg[opt_key]:
+                case MecabCmdArg.path_to_mecab_exe:
+                    yield opt_value
+                case MecabCmdArg.dic_dir_path:
+                    yield f"--dicdir={opt_value}"
+                case MecabCmdArg.rc_file_path:
+                    yield f"--rcfile={opt_value}"
+                case MecabCmdArg.user_dic_paths:
+                    yield f"--userdic={','.join(map(str, opt_value))}"
+                case MecabCmdArg.input_buffer_size:
+                    yield f"--input-buffer-size={opt_value}"
+                case MecabCmdArg.additional_mecab_args:
+                    yield from opt_value
+                case _:
+                    raise ValueError(f"invalid opt key: {opt_key}")
+
+    def make_mecab_cmd(self) -> Sequence[str]:
+        return tuple(self._iter_mecab_cmd())
+
+
+# Sanity check.
+_F1 = tuple(f.name for f in MecabCmdArg)
+_F2 = tuple(f.name for f in dataclasses.fields(MecabLaunchOpts))
+assert _F1 == _F2, "keep classes in sync."
+
+
+def default_mecab_cmd() -> Sequence[str]:
+    return MecabLaunchOpts().make_mecab_cmd()
+
+
 class BasicMecabController:
     """Run the bundled MeCab executable with AJT's configured dictionaries."""
 
-    _mecab_cmd: list[str] = [
-        find_executable("mecab"),
-        f"--dicdir={find_best_dic_dir()}",
-        f"--rcfile={MECAB_RC_PATH}",
-        # Load the original EDICT-derived entries alongside the selected system dictionary.
-        # https://taku910.github.io/mecab/dic.html
-        f"--userdic={SUPPORT_DIR / 'user_dic.dic'}",
-        f"--input-buffer-size={INPUT_BUFFER_SIZE}",
-    ]
-    _mecab_args: list[str] = []
     _verbose: bool
+    _mecab_cmd: Sequence[str]
 
-    def __init__(
-        self,
-        mecab_cmd: list[str] | None = None,
-        mecab_args: list[str] | None = None,
-        verbose: bool = False,
-    ) -> None:
+    def __init__(self, mecab_cmd: Sequence[str] = (), verbose: bool = False) -> None:
         """Initialize MeCab with optional command overrides for standalone use and tests."""
         super().__init__()
         check_mecab_rc()
         self._verbose = verbose
-        self._mecab_cmd = normalize_for_platform((mecab_cmd or self._mecab_cmd) + (mecab_args or self._mecab_args))
+        self._mecab_cmd = normalize_for_platform(mecab_cmd or default_mecab_cmd())
         if self._verbose:
             print("mecab cmd:", self._mecab_cmd)
 

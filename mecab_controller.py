@@ -4,10 +4,9 @@ import dataclasses
 import io
 import re
 from collections.abc import Iterable, Sequence
-from typing import Optional
 
 try:
-    from .basic_mecab_controller import BasicMecabController
+    from .basic_mecab_controller import BasicMecabController, MecabLaunchOpts
     from .basic_types import (
         COMPONENTS,
         Inflection,
@@ -21,7 +20,7 @@ try:
     from .lru_cache import LRUCache
     from .replace_mistakes import replace_mistakes
 except ImportError:
-    from basic_mecab_controller import BasicMecabController
+    from basic_mecab_controller import BasicMecabController, MecabLaunchOpts
     from basic_types import (
         COMPONENTS,
         Inflection,
@@ -64,15 +63,15 @@ class MecabController:
 
     def __init__(
         self,
-        mecab_cmd: list[str] | None = None,
-        mecab_args: list[str] | None = None,
+        opts: MecabLaunchOpts | None = None,
         verbose: bool = False,
         cache_max_size: int = 1024,
     ) -> None:
         """Configure the native controller and the maximum cached expression count."""
+        opts = opts or MecabLaunchOpts()
         self._mecab = BasicMecabController(
-            mecab_cmd=mecab_cmd,
-            mecab_args=(mecab_args or self._mecab_args),
+            # _analyze() requires a specific output format, including when custom launch options are supplied.
+            mecab_cmd=(*opts.make_mecab_cmd(), *self._additional_mecab_args),
             verbose=verbose,
         )
         self._cache.set_capacity(cache_max_size)
