@@ -170,6 +170,10 @@ class MecabLaunchOpts:
     input_buffer_size: str = INPUT_BUFFER_SIZE
     additional_mecab_args: Sequence[str] = ()
 
+    def __post_init__(self) -> None:
+        if not self.path_to_mecab_exe:
+            raise ValueError("path to mecab exe must be supplied.")
+
     def _iter_mecab_cmd(self) -> Iterable[str]:
         """
         additional_mecab_args are used to supply extra args such as --node-format=, --unk-format=, --eos-format=
