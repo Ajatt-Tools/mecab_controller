@@ -150,6 +150,8 @@ def start_mecab_process(command: Sequence[str]) -> subprocess.Popen[str]:
 
 
 class MecabCmdArg(enum.Enum):
+    """Name each launch option handled by the command builder."""
+
     path_to_mecab_exe = enum.auto()
     dic_dir_path = enum.auto()
     rc_file_path = enum.auto()
@@ -160,6 +162,8 @@ class MecabCmdArg(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class MecabLaunchOpts:
+    """Select MeCab launch arguments without changing controller class fields."""
+
     # Finds /usr/bin/mecab or another path by default. Fall backs to the binary in `./support`
     path_to_mecab_exe: str = find_executable("mecab")
     dic_dir_path: pathlib.Path = find_best_dic_dir()
@@ -171,12 +175,16 @@ class MecabLaunchOpts:
     additional_mecab_args: Sequence[str] = ()
 
     def __post_init__(self) -> None:
+        """Require an executable even when optional command arguments are empty."""
         if not self.path_to_mecab_exe:
             raise ValueError("path to mecab exe must be supplied.")
 
     def _iter_mecab_cmd(self) -> Iterable[str]:
         """
         additional_mecab_args are used to supply extra args such as --node-format=, --unk-format=, --eos-format=
+
+        Keep the MecabCmdArg dispatch together so option order and omitted arguments are visible in one place.
+        This dispatch intentionally exceeds the usual function-length limit.
         """
         for opt_key, opt_value in dataclasses.asdict(self).items():
             if not opt_value:
@@ -198,6 +206,7 @@ class MecabLaunchOpts:
                     raise ValueError(f"invalid opt key: {opt_key}")
 
     def make_mecab_cmd(self) -> Sequence[str]:
+        """Return the selected arguments as a command tuple without starting MeCab."""
         return tuple(self._iter_mecab_cmd())
 
 
@@ -208,6 +217,7 @@ assert _F1 == _F2, "keep classes in sync."
 
 
 def default_mecab_cmd() -> Sequence[str]:
+    """Build the default MeCab command for callers that do not supply launch arguments."""
     return MecabLaunchOpts().make_mecab_cmd()
 
 
