@@ -59,7 +59,7 @@ class MecabController:
     )
     _mecab: BasicMecabController
     _verbose: bool
-    _cache: LRUCache[str, Sequence[MecabParsedToken]] = LRUCache()
+    _cache: LRUCache[str, Sequence[MecabParsedToken]]
 
     def __init__(
         self,
@@ -74,7 +74,8 @@ class MecabController:
             mecab_cmd=(*opts.make_mecab_cmd(), *self._additional_mecab_args),
             verbose=verbose,
         )
-        self._cache.set_capacity(cache_max_size)
+        # Different dictionaries must never reuse each other's parsed readings.
+        self._cache = LRUCache(cache_max_size)
         self._verbose = verbose
 
     def translate(self, expr: str) -> Sequence[MecabParsedToken]:
