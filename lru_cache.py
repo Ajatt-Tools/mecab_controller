@@ -45,6 +45,11 @@ class LRUCache(Generic[K, V]):
                 self._cache.popitem(last=False)
 
     def setdefault(self, key: K, value: V) -> V:
-        value = self._cache.setdefault(key, value)
-        self._cache.move_to_end(key)
-        return value
+        """Return an existing entry or insert a default while applying the cache's capacity limit.
+
+        https://docs.python.org/3/library/stdtypes.html#dict.setdefault
+        """
+        # Direct OrderedDict.setdefault() calls bypass __setitem__ and its eviction of older entries.
+        if key not in self._cache:
+            self[key] = value
+        return self[key]
