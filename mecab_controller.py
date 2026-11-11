@@ -15,6 +15,7 @@ try:
         PartOfSpeech,
         Separators,
     )
+    from .consts import DEMO_EXPRESSIONS
     from .format import format_output
     from .kana_conv import is_kana_str, to_hiragana, to_katakana
     from .lru_cache import LRUCache
@@ -28,6 +29,7 @@ except ImportError:
         PartOfSpeech,
         Separators,
     )
+    from consts import DEMO_EXPRESSIONS
     from format import format_output
     from kana_conv import is_kana_str, to_hiragana, to_katakana
     from lru_cache import LRUCache
@@ -129,45 +131,9 @@ class MecabController:
 
 
 def main() -> None:
+    """Display formatted readings and parsed tokens for the library's demonstration expressions."""
     mecab = MecabController()
-
-    try_expressions = (
-        "カリン、自分でまいた種は自分で刈り取れ",
-        "昨日、林檎を2個買った。",
-        "真莉、大好きだよん＾＾",
-        "彼２０００万も使った。",
-        "彼二千三百六十円も使った。",
-        "千葉",
-        "昨日すき焼きを食べました",
-        "二人の美人",
-        "詳細はお気軽にお問い合わせ下さい。",
-        "Lorem ipsum dolor sit amet. ",
-        "Съешь ещё этих мягких французских булок, да выпей же чаю.",
-        "粗末な家に住んでいる",
-        "向けていた目",
-        "軽そうに見える",
-        "相合い傘",
-        "放っておけない",
-        "放っておいて",
-        "有り難う",
-        "プールから出て",
-        "一人暮らし",
-        "今日は",
-        "いい気分に当たって",
-        "助からない。",
-        "乗り込え",
-        "ほほ笑む",
-        "歩いた",
-        "荒んだ",
-        "温玉",
-        "他人のアソコ弄ってる",
-        "拗らせる,拗らせちゃった",
-        "打付ける,打付けた",
-        "遣る方無い",
-        "死んだよ",
-        "卵胞ホルモンと接ぎ目と足浴",
-    )
-    for idx, expr in enumerate(try_expressions):
+    for idx, expr in enumerate(DEMO_EXPRESSIONS):
         print(f"expr  #{idx:02d}: {mecab.reading(expr)}")
         for jdx, token in enumerate(mecab.translate(expr)):
             print(f"token #{jdx:02d}: {token}")
