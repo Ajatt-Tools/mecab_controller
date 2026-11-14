@@ -2,7 +2,15 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import dataclasses
 import enum
+import functools
 import typing
+
+try:
+    from .common_kana import SourceWord, adjust_reading
+    from .kana_conv import is_kana_str, to_katakana
+except ImportError:
+    from common_kana import SourceWord, adjust_reading
+    from kana_conv import is_kana_str, to_katakana
 
 
 class Separators:
@@ -113,6 +121,44 @@ class MecabParsedToken:
     katakana_reading: str  # Inflected reading, or "" when unavailable or unnecessary.
     part_of_speech: PartOfSpeech
     inflection_type: Inflection
+
+    @functools.cached_property
+    def raw_word_katakana_reading(self) -> str:
+        """Return the surface reading, or an empty string when it cannot be determined.
+        Here "surface" is the prefix of the (possibly) inflected raw word as it appeared in text, e.g. 食べ for 食べた.
+        """
+        if self.katakana_reading:
+            return self.katakana_reading
+        if is_kana_str(self.word):
+            return to_katakana(self.word)
+        return ""
+
+    @functools.cached_property
+    def guessed_headword_katakana_reading(self) -> str:
+        """Guess the headword reading from the raw-word (surface) reading.
+
+        Return an empty string for missing readings or unsupported changes, without another MeCab call.
+        Handle readings such as 来[き] → 来る[くる] and 死ん[しん] → 死ぬ[しぬ].
+        The guessed reading may be wrong.
+        Use it as another search key during audio and pitch accent searches
+        when a direct dictionary lookup finds nothing.
+        """
+        if not (self.word and self.headword):
+            return ""
+        if is_kana_str(self.headword):
+            return to_katakana(self.headword)
+        # 為る is deliberately treated as する for lookups, without rewriting sentence furigana.
+        if self.headword in ("為る", "爲る"):
+            return "スル"
+        if not self.raw_word_katakana_reading or not is_kana_str(self.raw_word_katakana_reading):
+            return ""
+        if self.word == self.headword:
+            return self.raw_word_katakana_reading
+        guessed = to_katakana(adjust_reading(SourceWord(self.word, self.raw_word_katakana_reading), self.headword))
+        # adjust_reading() retains the source reading for unsupported spelling changes.
+        if not guessed or guessed == self.raw_word_katakana_reading or not is_kana_str(guessed):
+            return ""
+        return guessed
 
 
 assert tuple(field.name for field in dataclasses.fields(MecabParsedToken)) == tuple(type(COMPONENTS).__annotations__)
