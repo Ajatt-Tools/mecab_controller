@@ -48,7 +48,9 @@ def replace_mistakes(tokens: Iterable[MecabParsedToken]) -> Iterable[MecabParsed
 
 
 def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Sequence[str]:
-    """Return headwords in a context window, or an empty sequence if it is incomplete."""
+    """Return headwords in a context window, or an empty sequence if it is incomplete.
+    E.g., ["十一", "人"].
+    """
     try:
         return tuple(context[idx].token.headword for idx in range(start, end))
     except IndexError:
@@ -56,7 +58,9 @@ def slice_headwords(context: Sequence[WrappedToken], start: int, end: int) -> Se
 
 
 def slice_context(context: Sequence[WrappedToken], start: int, end: int) -> str:
-    """Join token surfaces in a context window, or return an empty string if it is incomplete."""
+    """Join token surfaces in a context window, or return an empty string if it is incomplete.
+    E.g., ["十一", "人"]  → "十一人"
+    """
     try:
         return "".join(context[idx].token.word for idx in range(start, end))
     except IndexError:
@@ -101,30 +105,40 @@ def is_numeral_string(string: str | None) -> bool:
     return RE_NUMERAL_WORD.fullmatch(string or "") is not None
 
 
+assert is_numeral_string("２１") is True
+
+
 def is_counter_string(string: str | None) -> bool:
     """Recognize whole counter words without matching prefixes of longer words."""
     return RE_COUNTER_WORD.fullmatch(string or "") is not None
 
 
+assert is_counter_string("人称") is True
+
+
 def token_comes_after_number(context: Sequence[WrappedToken], pos: int) -> bool:
     """Check whether the preceding token consists entirely of number characters."""
+    # Example: In ["十一", "人", "前"] "人" comes after a number.
     # 十一人 is じゅういちにん, not じゅうひとり.
     return pos > 0 and is_numeral_string(context[pos - 1].token.word)
 
 
 def token_comes_before_regular_person_counter_suffix(context: Sequence[WrappedToken], pos: int) -> bool:
     """Check for a following 称, 前, or whole 三脚 token, which needs a regular person-counter reading."""
+    # Example: In ["十一", "人", "前"] "人" comes before the counter suffix "前"
     # 一人称, 一人前, and 二人三脚 also use the regular counter.
     return take_headword(context, pos + 1) in ("称", "前", "三脚")
 
 
 def token_comes_before_split_sankyaku(context: Sequence[WrappedToken], pos: int) -> bool:
     """Check whether the following two token surfaces spell 三脚 in an expression such as 二人三脚."""
+    # Example: In ["二人", "三", "脚"] tokens ["三", "脚"] spell "三脚".
     return slice_context(context, pos + 1, pos + 3) == "三脚"
 
 
 def needs_regular_person_counter_reading(context: Sequence[WrappedToken], pos: int) -> bool:
     """Check the surrounding tokens for a regular rather than native one/two-person counter reading."""
+    # Example: In ["十一", "人", "前"] "人" needs the にん reading.
     # 十一人 is じゅういちにん, not じゅうひとり.
     # 一人称 and 二人三脚 also use the regular counter.
     return (
@@ -135,7 +149,9 @@ def needs_regular_person_counter_reading(context: Sequence[WrappedToken], pos: i
 
 
 def short_number_reading(number: int) -> str:
-    """Read the regular tens and ones of a matched number from one through 99."""
+    """Read the regular tens and ones of a matched number from one through 99.
+    27 → ニジュウナナ
+    """
     tens, units = divmod(number, 10)
     reading = ""
     if tens > 1:
@@ -149,7 +165,9 @@ assert short_number_reading(27) == "ニジュウナナ"
 
 
 def short_person_count_reading(number: int) -> str:
-    """Apply native one/two-person readings and the ヨニン ending to short person counts."""
+    """Apply native one/two-person readings and the ヨニン ending to short person counts.
+    14 → ジュウヨニン
+    """
     if number == 1:
         return "ヒトリ"
     if number == 2:
@@ -174,13 +192,16 @@ def correct_person_counter_reading(token: MecabParsedToken) -> MecabParsedToken:
 
 
 def counter_has_gemination(number: int, counter: str) -> bool:
-    """Select counters whose final numeral consonant doubles, without applying 六個's change to 六冊 or 六歳."""
+    """Select counters whose final numeral consonant doubles, without applying 六個's change to 六冊 or 六歳.
+    6個 → True (ろっこ), 2回 → False (にかい)
+    """
     if counter in ("冊", "歳"):
         return number % 10 in (0, 1, 8)
     return counter in ("個", "本", "匹", "階", "回", "杯", "分") and number % 10 in (0, 1, 6, 8)
 
 
-assert counter_has_gemination(6, "個") is True
+assert counter_has_gemination(6, "個") is True  # ろっこ
+assert counter_has_gemination(2, "回") is False  # にかい
 
 
 def short_counter_ending(number: int, counter: str) -> str:
@@ -314,7 +335,7 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
         and slice_headwords(context, pos + 1, pos + 3) in (("くらい", "で"), ("ほど", "で"))
     ):
         # 七分[シチブ] + くらい + で → 七分[ナナフン] + くらい + で for an approximate duration.
-        # 十二分[ジュウニブン] and 七分丈 do not match this contextual rule.
+        # 十二分[ジュウニブン] and 七分丈[しちぶたけ] do not match this contextual rule.
         yield correct_short_counter_reading(token)
     elif slice_context(context, pos, pos + 2) == "三色":
         # 三 + 色 must stay a whole word so 色 is not looked up separately as a suffix.
