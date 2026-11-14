@@ -10,6 +10,15 @@ except ImportError:
     from kana_conv import to_katakana as _
 
 
+def find_common_suffix_length(string1: str, string2: str) -> int:
+    suffix_length = 0
+    for word_char, reading_char in zip(reversed(string1), reversed(string2)):
+        if _(word_char) != _(reading_char):
+            break
+        suffix_length += 1
+    return suffix_length
+
+
 class SourceWord(typing.NamedTuple):
     word: str
     reading: str
@@ -64,14 +73,10 @@ def adjust_reading_ending(source: SourceWord, target_word: str) -> str:
     # Go from the last to the first character
     # and skip the characters that are identical between the headword and the reading.
     # In the end, the reading of a common `stem` should be found, e.g. "ひざまず" for "跪かなかった"
-    idx_headword, idx_reading = len(source.word), len(source.reading)
-    while (
-        idx_headword > 0 and idx_reading > 0 and _(source.word[idx_headword - 1]) == _(source.reading[idx_reading - 1])
-    ):
-        idx_headword -= 1
-        idx_reading -= 1
-    stem_reading = source.reading[:idx_reading]
-    inflected_reading = target_word[idx_headword:]
+    common_suffix_length = find_common_suffix_length(*source)
+    # Example: stem (kanji) reading for 食べた is た, inflected reading (suffix) is べた.
+    stem_reading = source.reading[: len(source.reading) - common_suffix_length]
+    inflected_reading = target_word[len(source.word) - common_suffix_length :]
 
     if _(stem_reading) == _(source.reading):
         # Example: 寝[ね], stem_reading=ね; 出来[デキ], stem_reading=デキ
