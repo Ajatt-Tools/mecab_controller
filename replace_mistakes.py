@@ -6,14 +6,29 @@ from collections.abc import Iterable, Sequence
 
 try:
     from .basic_types import Inflection, MecabParsedToken, PartOfSpeech
+    from .consts import (
+        NATIVE_TSU_READINGS,
+        NUMERAL_READINGS,
+        P_COUNTER_ENDINGS,
+        SHORT_COUNTER_ENDINGS,
+        VOICED_COUNTER_ENDINGS,
+    )
     from .word_conv import to_arabic_numbers
 except ImportError:
     from basic_types import Inflection, MecabParsedToken, PartOfSpeech
+    from consts import (
+        NATIVE_TSU_READINGS,
+        NUMERAL_READINGS,
+        P_COUNTER_ENDINGS,
+        SHORT_COUNTER_ENDINGS,
+        VOICED_COUNTER_ENDINGS,
+    )
     from word_conv import to_arabic_numbers
 
 
 RE_NUMERAL_WORD = re.compile(r"[〇零一二三四五六七八九十百千万億兆０-９0-9]+")
 RE_COUNTER_WORD = re.compile(r"ヶ月|人称|人前|[つ月日筋隻丁品番枚時回円万歳限人]")
+RE_SHORT_COUNTER_COUNT = re.compile(r"(?P<number>[1-9][0-9]?)(?P<counter>[人個枚本台匹冊階歳回杯分つ])")
 
 
 @dataclasses.dataclass
@@ -119,17 +134,108 @@ def needs_regular_person_counter_reading(context: Sequence[WrappedToken], pos: i
     )
 
 
+def short_number_reading(number: int) -> str:
+    """Read the regular tens and ones of a matched number from one through 99."""
+    tens, units = divmod(number, 10)
+    reading = ""
+    if tens > 1:
+        reading = NUMERAL_READINGS[tens]
+    if tens:
+        reading += "ジュウ"
+    return reading + NUMERAL_READINGS[units]
+
+
+assert short_number_reading(27) == "ニジュウナナ"
+
+
+def short_person_count_reading(number: int) -> str:
+    """Apply native one/two-person readings and the ヨニン ending to short person counts."""
+    if number == 1:
+        return "ヒトリ"
+    if number == 2:
+        return "フタリ"
+    reading = short_number_reading(number)
+    if number % 10 == 4:
+        reading = reading[:-1]
+    return reading + "ニン"
+
+
+assert short_person_count_reading(14) == "ジュウヨニン"
+
+
 def correct_person_counter_reading(token: MecabParsedToken) -> MecabParsedToken:
-    """Use ヒトリ/フタリ for combined one/two-person counters, leaving other tokens unchanged."""
-    match to_arabic_numbers(token.headword):
-        case "1人":
-            # １人[イチニン] → １人[ヒトリ]
-            return dataclasses.replace(token, katakana_reading="ヒトリ")
-        case "2人":
-            # ２人[ニニン] → ２人[フタリ]
-            return dataclasses.replace(token, katakana_reading="フタリ")
-        case _:
-            return token
+    """Correct short person counts while leaving padded identifiers and larger counts unchanged."""
+    # Example: ２人[ニニン] gets corrected to ２人[フタリ]
+    # Unknown digit tokens such as 11 have no numeral reading in bundled IPADIC.
+    match = RE_SHORT_COUNTER_COUNT.fullmatch(to_arabic_numbers(token.headword))
+    if match and match["counter"] == "人":
+        return dataclasses.replace(token, katakana_reading=short_person_count_reading(int(match["number"])))
+    return token
+
+
+def counter_has_gemination(number: int, counter: str) -> bool:
+    """Select counters whose final numeral consonant doubles, without applying 六個's change to 六冊 or 六歳."""
+    if counter in ("冊", "歳"):
+        return number % 10 in (0, 1, 8)
+    return counter in ("個", "本", "匹", "階", "回", "杯", "分") and number % 10 in (0, 1, 6, 8)
+
+
+assert counter_has_gemination(6, "個") is True
+
+
+def short_counter_ending(number: int, counter: str) -> str:
+    """Resolve counter voicing and handakuten separately from changes to the numeral.
+    Example: 7+分=>ふん
+    """
+    if number % 10 == 3 and counter in VOICED_COUNTER_ENDINGS:
+        return VOICED_COUNTER_ENDINGS[counter]
+    if counter == "分" and number % 10 in (3, 4):
+        return "プン"  # otherwise, ふん is used.
+    if counter_has_gemination(number, counter):
+        return P_COUNTER_ENDINGS.get(counter, SHORT_COUNTER_ENDINGS[counter])
+    return SHORT_COUNTER_ENDINGS[counter]
+
+
+assert short_counter_ending(7, "分") == "フン"
+
+
+def short_counter_reading(number: int, counter: str) -> str:
+    """Read a supported short counter, returning an empty string for unsupported native つ counts."""
+    if counter == "人":
+        return short_person_count_reading(number)
+    elif counter == "つ":
+        if 1 <= number <= len(NATIVE_TSU_READINGS):
+            return NATIVE_TSU_READINGS[number - 1]
+        return ""
+    elif counter == "歳" and number == 20:
+        return "ハタチ"
+    reading = short_number_reading(number)
+    # 一個, 六個, 八個, and multiples of 十 use イッコ, ロッコ, ハッコ, and ジュッコ endings.
+    if counter_has_gemination(number, counter):
+        reading = reading[:-1] + "ッ"
+    return reading + short_counter_ending(number, counter)
+
+
+assert short_counter_reading(20, "歳") == "ハタチ"
+assert short_counter_reading(6, "本") == "ロッポン"
+
+
+def correct_short_counter_reading(token: MecabParsedToken) -> MecabParsedToken:
+    """Supply a merged count's numeral reading while retaining its spelling and headword for dictionary lookup."""
+    # Example: 四十本 receives the ヨンジュッポン reading.
+    if match := RE_SHORT_COUNTER_COUNT.fullmatch(to_arabic_numbers(token.headword)):
+        # 三 + 十二分 must read サンジュウニフン, not retain a lexical 十二分 suffix reading.
+        # The ordered rules leave an already-unified 十二分 untouched unless its context identifies a counter.
+        if reading := short_counter_reading(int(match["number"]), match["counter"]):
+            return dataclasses.replace(token, katakana_reading=reading)
+    return token
+
+
+def is_short_counter(context: Sequence[WrappedToken], start: int, end: int) -> bool:
+    """Check whether the complete context span is a supported short counter."""
+    # Example: In ["十一", "人", "前"] "十一"+"人" is a short counter.
+    # fullmatch returns a Match object for ２ + １ + 人, not the Boolean 'True'.
+    return RE_SHORT_COUNTER_COUNT.fullmatch(to_arabic_numbers(slice_context(context, start, end))) is not None
 
 
 def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], pos: int) -> Iterable[MecabParsedToken]:
@@ -180,6 +286,15 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
         other = context[pos + 2].token
         reading = token.katakana_reading + "ニン" + other.katakana_reading
         yield merge_context(context, pos=pos, end=pos + 3, new_katakana_reading=reading)
+    elif not token_comes_after_number(context, pos) and is_short_counter(context, pos, pos + 4):
+        # 三 + 十 + 三 + 人 needs one corrected count, not a correction to its trailing digit alone.
+        yield correct_short_counter_reading(merge_context(context, pos=pos, end=pos + 4))
+    elif not token_comes_after_number(context, pos) and is_short_counter(context, pos, pos + 3):
+        # Full-width counts may arrive as ２ + １ + 人 even when ASCII 21 is a single token.
+        yield correct_short_counter_reading(merge_context(context, pos=pos, end=pos + 3))
+    elif not token_comes_after_number(context, pos) and is_short_counter(context, pos, pos + 2):
+        # ASCII digit tokens can have empty readings even for simple examples such as 2 + 個.
+        yield correct_short_counter_reading(merge_context(context, pos=pos, end=pos + 2))
     elif (
         is_numeral_string(token.headword)
         and is_counter_string(take_headword(context, pos + 1))
@@ -189,6 +304,29 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
         # Do not merge only the final ０ + 人 of １ + ０ + ０ + 人.
         combined = merge_context(context, pos=pos, end=pos + 2)
         yield correct_person_counter_reading(combined)
+    elif to_arabic_numbers(token.headword) == "6本" and token.katakana_reading == "ロクモト":
+        # 六本[ロクモト] → 六本[ロッポン], retaining the original word and headword for dictionary alternatives.
+        yield correct_short_counter_reading(token)
+    elif (
+        token.headword.endswith("分")
+        and token.katakana_reading.endswith("ブ")
+        and is_short_counter(context, pos, pos + 1)
+        and slice_headwords(context, pos + 1, pos + 3) in (("くらい", "で"), ("ほど", "で"))
+    ):
+        # 七分[シチブ] + くらい + で → 七分[ナナフン] + くらい + で for an approximate duration.
+        # 十二分[ジュウニブン] and 七分丈 do not match this contextual rule.
+        yield correct_short_counter_reading(token)
+    elif slice_context(context, pos, pos + 2) == "三色":
+        # 三 + 色 must stay a whole word so 色 is not looked up separately as a suffix.
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="サンシキ")
+    elif slice_context(context, pos, pos + 2) == "真莉":
+        # 真 + 莉 is the given-name reading マリ, not an independently annotated 真 followed by unknown 莉.
+        yield merge_context(context, pos=pos, end=pos + 2, new_katakana_reading="マリ")
+    elif token.headword in ("遣る", "やる") and slice_headwords(context, pos + 1, pos + 3) == ("方", "無い"):
+        # In 遣る方無い, 方無い reads カタナイ rather than separate ホウ + ナイ.
+        yield token
+        skip_context(context, pos + 1)
+        yield merge_context(context, pos=pos + 1, end=pos + 3, new_katakana_reading="カタナイ")
     elif (merged_word := slice_context(context, pos, pos + 3)) in ("かもしれない", "かも知れない"):
         # Pitch accent lookup indexes both spellings as katakana.
         skip_context(context, pos + 1, pos + 3)

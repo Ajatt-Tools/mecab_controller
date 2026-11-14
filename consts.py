@@ -1,6 +1,7 @@
 # Copyright: Ajatt-Tools and contributors; https://github.com/Ajatt-Tools
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 import re
+from types import MappingProxyType
 
 # Japanese units group large numbers by ten thousand, not by one thousand.
 # https://en.wikipedia.org/wiki/Japanese_numerals#Powers_of_10
@@ -21,6 +22,27 @@ NUMERAL_CACHE_SIZE = 16384
 ARAB_TO_FULL_WIDTH_DIGITS = str.maketrans(ARABIC_DIGITS, FULL_WIDTH_DIGITS)
 RE_NUMERAL = re.compile(r"[0-9０-９零〇一二三四五六七八九十百千万億兆京]+")
 KANJI_TO_DIGITS = str.maketrans(JAPANESE_DIGITS + "〇", ARABIC_DIGITS + "0")
+
+# Build counter readings from the number and counter ending, adjusting both when pronunciation changes.
+# For example, 六本 combines ロク and ホン, but becomes ロッポン rather than ロクホン.
+# These tables provide digit readings, counter endings, and their voiced or p-sound variants.
+NUMERAL_READINGS = ("", "イチ", "ニ", "サン", "ヨン", "ゴ", "ロク", "ナナ", "ハチ", "キュウ")
+SHORT_COUNTER_ENDINGS = MappingProxyType({
+    "個": "コ",
+    "枚": "マイ",
+    "本": "ホン",
+    "台": "ダイ",
+    "匹": "ヒキ",
+    "冊": "サツ",
+    "階": "カイ",
+    "歳": "サイ",
+    "回": "カイ",
+    "杯": "ハイ",
+    "分": "フン",
+})
+VOICED_COUNTER_ENDINGS = MappingProxyType({"本": "ボン", "匹": "ビキ", "杯": "バイ", "階": "ガイ"})
+P_COUNTER_ENDINGS = MappingProxyType({"本": "ポン", "匹": "ピキ", "杯": "パイ", "分": "プン"})
+NATIVE_TSU_READINGS = ("ヒトツ", "フタツ", "ミッツ", "ヨッツ", "イツツ", "ムッツ", "ナナツ", "ヤッツ", "ココノツ")
 
 # Keep CLI demonstration data out of main() so the executable flow stays short.
 DEMO_EXPRESSIONS = (
