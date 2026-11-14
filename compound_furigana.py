@@ -95,4 +95,5 @@ if __name__ == "__main__":
     assert break_compound_furigana("お 問い合[といあ]わせ") == "お 問[と]い 合[あ]わせ"
     assert break_compound_furigana("あなた 方[がた]") == "あなた 方[がた]"
     assert break_compound_furigana("相合い傘[あいあいがさ]") == "相合[あいあ]い 傘[がさ]"
+    assert break_compound_furigana("あいあいがさ") == "あいあいがさ"
     print("Done.")
