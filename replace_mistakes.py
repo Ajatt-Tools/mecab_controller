@@ -375,6 +375,12 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
             token,
             headword="温玉",
         )
+    elif token.headword in ("為る", "爲る") and token.word.endswith("ろ"):
+        # Prefer 為ろ[シロ] without changing the spelling, headword, or grammatical metadata.
+        yield dataclasses.replace(token, katakana_reading="シロ")
+    elif token.headword in ("為る", "爲る") and token.word in ("為る", "爲る"):
+        # Prefer 為る[スル] in dictionary form. Keep 為れ[ナレ] and bare 為[ナ] before れる intact.
+        yield dataclasses.replace(token, katakana_reading="スル")
     elif token.headword == "した" and token.word == "した":
         yield dataclasses.replace(
             token,

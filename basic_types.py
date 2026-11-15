@@ -155,9 +155,6 @@ class MecabParsedToken:
             return ""
         if is_kana_str(self.headword):
             return to_katakana(self.headword)
-        # 為る is deliberately treated as する for lookups, without rewriting sentence furigana.
-        if self.headword in ("為る", "爲る"):
-            return "スル"
         if not self.raw_word_katakana_reading or not is_kana_str(self.raw_word_katakana_reading):
             return ""
         if self.word == self.headword:
