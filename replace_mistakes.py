@@ -360,6 +360,16 @@ def replace_mistake(token: MecabParsedToken, context: Sequence[WrappedToken], po
         )
     elif token.word == "放っ" and slice_headwords(context, pos + 1, pos + 3) in (("て", "おく"), ("て", "おける")):
         yield dataclasses.replace(token, headword="放る", katakana_reading="ホウッ")
+    elif token.word == "美しゅう":
+        # Prefer 美醜[びしゅう] for this mixed spelling.
+        # Keep token.word unchanged so generated readings retain the spelling on the user's card.
+        yield dataclasses.replace(
+            token,
+            headword="美醜",
+            katakana_reading="ビシュウ",
+            part_of_speech=PartOfSpeech.noun,
+            inflection_type=Inflection.unknown,
+        )
     elif token.word == "温玉" and token.headword == "オンセンタマゴ":
         yield dataclasses.replace(
             token,
