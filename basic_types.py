@@ -122,6 +122,14 @@ class MecabParsedToken:
     part_of_speech: PartOfSpeech
     inflection_type: Inflection
 
+    def has_distinct_headword_reading(self) -> bool:
+        """Return whether the guessed headword reading differs beyond kana script."""
+        # する and スル are the same lookup spelling, not a separate reading to search.
+        return bool(
+            self.guessed_headword_katakana_reading
+            and self.guessed_headword_katakana_reading != to_katakana(self.headword)
+        )
+
     @functools.cached_property
     def raw_word_katakana_reading(self) -> str:
         """Return the surface reading, or an empty string when it cannot be determined.
