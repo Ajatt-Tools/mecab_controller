@@ -11,6 +11,9 @@ KATAKANA_TO_HIRAGANA = str.maketrans(KATAKANA, HIRAGANA)
 HIRAGANA_TO_KATAKANA = str.maketrans(HIRAGANA, KATAKANA)
 
 RE_ONE_MORA = re.compile(r".゚?[ァィゥェォャュョぁぃぅぇぉゃゅょ]?")
+# Reuse the exact character lists, including ゚, rather than accepting whole Unicode blocks.
+# A compiled match avoids per-character Python calls without retaining words in a cache.
+RE_KANA_STR = re.compile(f"[{re.escape(HIRAGANA + KATAKANA + 'ー')}]+")
 
 
 def kana_to_moras(kana: str) -> list[str]:
@@ -56,9 +59,12 @@ def is_katakana_str(word: str) -> bool:
 
 
 def is_kana_str(word: str) -> bool:
+    """Return whether a nonempty word contains only supported kana, raising ValueError for empty input."""
     if not word:
         raise ValueError("string can't be empty")
-    return all(map(is_kana_char, word))
+    # fullmatch() also rejects trailing newlines, unlike a pattern ending with $.
+    # https://docs.python.org/3/library/re.html#re.Pattern.fullmatch
+    return RE_KANA_STR.fullmatch(word) is not None
 
 
 def main() -> None:
